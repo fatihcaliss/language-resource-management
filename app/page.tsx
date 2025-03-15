@@ -1,16 +1,9 @@
-import { Button } from "antd"
-
-import MainLayout from "./components/MainLayout"
+import { redirect } from "next/navigation"
 
 export default function Home() {
-  return (
-    <MainLayout>
-      <div className="flex min-h-full flex-col items-center justify-center">
-        <h1 className="text-2xl font-bold mb-4">
-          Welcome to Language Resource Management
-        </h1>
-        <Button type="primary">Get Started</Button>
-      </div>
-    </MainLayout>
-  )
+  // Redirect to login page
+  redirect("/auth/login")
+
+  // This part won't be executed due to the redirect
+  return null
 }

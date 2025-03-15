@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import {
+  LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
   SettingOutlined,
@@ -11,7 +12,11 @@ import {
 } from "@ant-design/icons"
 import { Breadcrumb, Button, Dropdown, Layout, Menu, theme } from "antd"
 
+import { logout } from "../../utils/auth"
+
 import "./MainLayout.css"
+
+import { useRouter } from "next/navigation"
 
 const { Header, Sider, Content } = Layout
 
@@ -20,10 +25,15 @@ interface MainLayoutProps {
 }
 
 const MainLayout = ({ children }: MainLayoutProps) => {
+  const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken()
+
+  const handleLogout = () => {
+    logout()
+  }
 
   const userMenuItems = [
     {
@@ -39,7 +49,9 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     {
       key: "logout",
       label: "Logout",
+      icon: <LogoutOutlined />,
       danger: true,
+      onClick: handleLogout,
     },
   ]
 
@@ -57,17 +69,20 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             {
               key: "1",
               icon: <UserOutlined />,
-              label: "nav 1",
+              label: "Dashboard",
+              onClick: () => router.push("/dashboard"),
             },
             {
               key: "2",
               icon: <VideoCameraOutlined />,
-              label: "nav 2",
+              label: "Projects",
+              onClick: () => router.push("/projects"),
             },
             {
               key: "3",
               icon: <UploadOutlined />,
-              label: "nav 3",
+              label: "Resources",
+              onClick: () => router.push("/resources-management"),
             },
           ]}
         />
@@ -93,9 +108,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                   height: 64,
                 }}
               />
-              <Breadcrumb
-                items={[{ title: "Home" }, { title: "List" }, { title: "App" }]}
-              />
+              <Breadcrumb items={[{ title: "Home" }, { title: "Dashboard" }]} />
             </div>
 
             <div style={{ marginRight: "24px" }}>
