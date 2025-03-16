@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation"
 import { LockOutlined, UserOutlined } from "@ant-design/icons"
 import { Button, Card, Checkbox, Form, Input, message, Typography } from "antd"
 
-import { login } from "../../utils/auth"
+import { apiClient } from "@/app/services/instance"
+
+import { login, setAuthToken } from "../../services/auth"
 
 const { Title, Text } = Typography
 
@@ -18,12 +20,21 @@ export default function LoginPage() {
   const onFinish = async (values: any) => {
     try {
       setLoading(true)
-      const { success, message } = await login(values.username, values.password)
-      if (success) {
-        messageApi.success(message)
+      const params = {
+        email: values.email,
+        password: values.password,
+      }
+      const { data } = (await apiClient.post("/auth/login", params)) as {
+        data: { data: { token: string; message: string } }
+      }
+      console.log("data", data)
+      localStorage.setItem("token", data.data.token)
+      setAuthToken(data.data.token)
+      if (data.data.token) {
+        // messageApi.success(data.message)
         router.push("/dashboard")
       } else {
-        messageApi.error(message)
+        // messageApi.error(data.message)
       }
     } finally {
       setLoading(false)
@@ -33,7 +44,7 @@ export default function LoginPage() {
   return (
     <>
       {contextHolder}
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <div className="flex min-h-screen items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-lg">
           <div className="mb-6 text-center">
             <Title level={2}>Language Resource Management</Title>
@@ -48,14 +59,12 @@ export default function LoginPage() {
             size="large"
           >
             <Form.Item
-              name="username"
-              rules={[
-                { required: true, message: "Please input your Username!" },
-              ]}
+              name="email"
+              rules={[{ required: true, message: "Please input your Email!" }]}
             >
               <Input
                 prefix={<UserOutlined className="text-gray-400" />}
-                placeholder="Username or Email"
+                placeholder="Email"
               />
             </Form.Item>
 

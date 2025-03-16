@@ -13,7 +13,10 @@
   "dependencies": {
     "@ant-design/icons": "^5.6.1",
     "@ant-design/nextjs-registry": "^1.0.2",
+    "@tanstack/react-query": "^5.68.0",
+    "@tanstack/react-query-devtools": "^5.68.0",
     "antd": "^5.24.3",
+    "axios": "^1.8.3",
     "next": "15.2.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
@@ -21,6 +24,7 @@
   "devDependencies": {
     "@ianvs/prettier-plugin-sort-imports": "^4.4.1",
     "@tailwindcss/postcss": "^4",
+    "@tanstack/eslint-plugin-query": "^5.68.0",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",

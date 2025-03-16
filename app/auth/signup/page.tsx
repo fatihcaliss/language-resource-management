@@ -6,7 +6,8 @@ import { useRouter } from "next/navigation"
 import { LockOutlined, MailOutlined, UserOutlined } from "@ant-design/icons"
 import { Button, Card, Checkbox, Form, Input, message, Typography } from "antd"
 
-import { signup } from "../../utils/auth"
+import { signup } from "../../services/auth"
+import { apiClient } from "../../services/instance"
 
 const { Title, Text } = Typography
 
@@ -16,24 +17,47 @@ export default function SignupPage() {
   const [messageApi, contextHolder] = message.useMessage()
 
   const onFinish = async (values: any) => {
+    console.log("values", values)
     try {
       setLoading(true)
-      const { success, message } = await signup(values)
-      if (success) {
-        router.push("/dashboard")
-        messageApi.success(message)
+      // const { success, message } = await (values)
+      const params = {
+        email: values.email,
+        password: values.password,
+        fullname: values.username,
+      }
+      const { data } = await apiClient.post("/auth/register", params)
+      console.log("data", data)
+      if (data) {
+        router.push("/auth/login")
+        // messageApi.success(data.message)
       } else {
-        messageApi.error(message)
+        // messageApi.error(data.message)
       }
     } finally {
       setLoading(false)
     }
   }
 
+  // const onFinish = async (values: any) => {
+  //   try {
+  //     setLoading(true)
+  //     const { success, message } = await signup(values)
+  //     if (success) {
+  //       router.push("/dashboard")
+  //       messageApi.success(message)
+  //     } else {
+  //       messageApi.error(message)
+  //     }
+  //   } finally {
+  //     setLoading(false)
+  //   }
+  // }
+
   return (
     <>
       {contextHolder}
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
+      <div className="flex min-h-screen items-center justify-center  p-4">
         <Card className="w-full max-w-md shadow-lg">
           <div className="mb-6 text-center">
             <Title level={2}>Language Resource Management</Title>

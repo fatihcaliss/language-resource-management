@@ -6,6 +6,8 @@ import "./globals.css"
 
 import { AntdRegistry } from "@ant-design/nextjs-registry"
 
+import { Providers } from "./components/providers/providers"
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -44,11 +46,13 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
-        <AntdRegistry>
-          <ConfigProvider theme={customTheme} wave={{ disabled: true }}>
-            {children}
-          </ConfigProvider>
-        </AntdRegistry>
+        <Providers>
+          <AntdRegistry>
+            <ConfigProvider theme={customTheme} wave={{ disabled: true }}>
+              {children}
+            </ConfigProvider>
+          </AntdRegistry>
+        </Providers>
       </body>
     </html>
   )

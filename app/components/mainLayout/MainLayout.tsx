@@ -12,11 +12,11 @@ import {
 } from "@ant-design/icons"
 import { Breadcrumb, Button, Dropdown, Layout, Menu, theme } from "antd"
 
-import { logout } from "../../utils/auth"
+import { logout } from "../../services/auth"
 
 import "./MainLayout.css"
 
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 
 const { Header, Sider, Content } = Layout
 
@@ -25,6 +25,7 @@ interface MainLayoutProps {
 }
 
 const MainLayout = ({ children }: MainLayoutProps) => {
+  const pathname = usePathname()
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
   const {
@@ -64,22 +65,22 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         <Menu
           theme="dark"
           mode="inline"
-          defaultSelectedKeys={["1"]}
+          defaultSelectedKeys={[pathname]}
           items={[
             {
-              key: "1",
+              key: "/dashboard",
               icon: <UserOutlined />,
               label: "Dashboard",
               onClick: () => router.push("/dashboard"),
             },
             {
-              key: "2",
+              key: "/projects",
               icon: <VideoCameraOutlined />,
               label: "Projects",
               onClick: () => router.push("/projects"),
             },
             {
-              key: "3",
+              key: "/resources-management",
               icon: <UploadOutlined />,
               label: "Resources",
               onClick: () => router.push("/resources-management"),
