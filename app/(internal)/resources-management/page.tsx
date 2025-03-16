@@ -206,6 +206,7 @@ const ResourcesManagementPage: React.FC = () => {
           </div>
 
           <Table
+            scroll={{ x: 1000 }}
             columns={columns}
             dataSource={filteredData}
             rowKey="id"

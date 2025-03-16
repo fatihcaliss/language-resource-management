@@ -75,7 +75,9 @@ export default function LoginPage() {
           >
             <Form.Item
               name="email"
-              rules={[{ required: true, message: "Please input your Email!" }]}
+              rules={[
+                { type: "email", message: "Please input a valid email!" },
+              ]}
             >
               <Input
                 prefix={<UserOutlined className="text-gray-400" />}

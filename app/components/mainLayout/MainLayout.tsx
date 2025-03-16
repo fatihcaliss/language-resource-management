@@ -105,12 +105,12 @@ const MainLayout = ({ children }: MainLayoutProps) => {
               label: "Dashboard",
               onClick: () => router.push("/dashboard"),
             },
-            {
-              key: "/projects",
-              icon: <VideoCameraOutlined />,
-              label: "Projects",
-              onClick: () => router.push("/projects"),
-            },
+            // {
+            //   key: "/projects",
+            //   icon: <VideoCameraOutlined />,
+            //   label: "Projects",
+            //   onClick: () => router.push("/projects"),
+            // },
             {
               key: "/resources-management",
               icon: <UploadOutlined />,
