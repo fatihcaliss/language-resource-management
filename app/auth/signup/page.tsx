@@ -4,55 +4,46 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { LockOutlined, MailOutlined, UserOutlined } from "@ant-design/icons"
+import { useMutation } from "@tanstack/react-query"
 import { Button, Card, Checkbox, Form, Input, message, Typography } from "antd"
 
-import { signup } from "../../services/auth"
 import { apiClient } from "../../services/instance"
 
 const { Title, Text } = Typography
 
 export default function SignupPage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
   const [messageApi, contextHolder] = message.useMessage()
 
+  const signupMutation = useMutation({
+    mutationFn: async (params: {
+      email: string
+      password: string
+      fullname: string
+    }) => {
+      const { data } = await apiClient.post("/auth/register", params)
+      return data
+    },
+    onSuccess: (data) => {
+      router.push("/auth/login")
+    },
+    onError: (error: any) => {
+      messageApi.error(error?.error?.detail)
+    },
+  })
+
   const onFinish = async (values: any) => {
-    console.log("values", values)
     try {
-      setLoading(true)
-      // const { success, message } = await (values)
       const params = {
         email: values.email,
         password: values.password,
         fullname: values.username,
       }
-      const { data } = await apiClient.post("/auth/register", params)
-      console.log("data", data)
-      if (data) {
-        router.push("/auth/login")
-        // messageApi.success(data.message)
-      } else {
-        // messageApi.error(data.message)
-      }
-    } finally {
-      setLoading(false)
+      await signupMutation.mutateAsync(params)
+    } catch (error) {
+      console.error("Signup failed:", error)
     }
   }
-
-  // const onFinish = async (values: any) => {
-  //   try {
-  //     setLoading(true)
-  //     const { success, message } = await signup(values)
-  //     if (success) {
-  //       router.push("/dashboard")
-  //       messageApi.success(message)
-  //     } else {
-  //       messageApi.error(message)
-  //     }
-  //   } finally {
-  //     setLoading(false)
-  //   }
-  // }
 
   return (
     <>
@@ -161,7 +152,7 @@ export default function SignupPage() {
                 type="primary"
                 htmlType="submit"
                 className="w-full"
-                loading={loading}
+                loading={signupMutation.isPending}
               >
                 Sign Up
               </Button>

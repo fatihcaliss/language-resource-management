@@ -7,10 +7,13 @@ import {
   PlusOutlined,
   SearchOutlined,
 } from "@ant-design/icons"
+import { useMutation } from "@tanstack/react-query"
 import { Button, Input, message, Popconfirm, Select, Space, Table } from "antd"
 import type { ColumnsType } from "antd/es/table"
 
-import MainLayout from "../components/mainLayout/MainLayout"
+import MainLayout from "@/app/components/mainLayout/MainLayout"
+import { setAuthToken } from "@/app/services/auth"
+import { apiClient } from "@/app/services/instance"
 
 // Define the interface for our resource data
 interface ResourceItem {
@@ -28,6 +31,24 @@ const ResourcesManagementPage: React.FC = () => {
   const [data, setData] = useState<ResourceItem[]>([])
   const [loading, setLoading] = useState<boolean>(false)
   const [searchText, setSearchText] = useState<string>("")
+
+  const addNewResourceMutation = useMutation({
+    mutationFn: async (params: { name: string }) => {
+      const { data } = (await apiClient.post(
+        "/Environments/create",
+        params
+      )) as {
+        data: { data: boolean }
+      }
+      return data
+    },
+    onSuccess: (data) => {
+      console.log("data", data)
+    },
+    onError: (error: any) => {
+      messageApi.error(error?.error?.detail)
+    },
+  })
 
   // Mock data - replace with actual API call
   useEffect(() => {
@@ -174,7 +195,10 @@ const ResourcesManagementPage: React.FC = () => {
               <Button
                 type="primary"
                 icon={<PlusOutlined />}
-                onClick={() => messageApi.info("Add new resource")}
+                // onClick={() => messageApi.info("Add new resource")}
+                onClick={() =>
+                  addNewResourceMutation.mutateAsync({ name: "test" })
+                }
               >
                 Add New Resource
               </Button>

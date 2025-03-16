@@ -9,7 +9,7 @@ import {
 } from "@ant-design/icons"
 import { Card, Col, Row, Statistic, Typography } from "antd"
 
-import MainLayout from "../components/mainLayout/MainLayout"
+import MainLayout from "@/app/components/mainLayout/MainLayout"
 
 const { Title } = Typography
 

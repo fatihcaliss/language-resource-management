@@ -9,7 +9,7 @@ import { Button, Card, Checkbox, Form, Input, message, Typography } from "antd"
 
 import { apiClient } from "@/app/services/instance"
 
-import { login, setAuthToken } from "../../services/auth"
+import { setAuthToken, setRefreshToken } from "../../services/auth"
 
 const { Title, Text } = Typography
 
@@ -20,7 +20,7 @@ export default function LoginPage() {
   const loginMutation = useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
       const { data } = (await apiClient.post("/auth/login", credentials)) as {
-        data: { data: { token: string; message: string } }
+        data: { data: { token: string; refreshToken: string; message: string } }
       }
       return data
     },
@@ -28,6 +28,12 @@ export default function LoginPage() {
       if (data.data.token) {
         localStorage.setItem("token", data.data.token)
         setAuthToken(data.data.token)
+
+        // Store the refresh token
+        if (data.data.refreshToken) {
+          setRefreshToken(data.data.refreshToken)
+        }
+
         router.push("/dashboard")
       }
     },

@@ -25,41 +25,113 @@ export const isAuthenticated = (): boolean => {
   return false
 }
 
-export const login = async (
-  username: string,
-  password: string
-): Promise<{ success: boolean; message: string }> => {
-  try {
-    console.log("Login attempt:", { username, password })
-
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    setAuthToken("dummy-token")
-    return { success: true, message: "Login successful!" }
-  } catch (error) {
-    console.error("Login error:", error)
-    return { success: false, message: "Failed to login. Please try again." }
-  }
+// Set refresh token in cookies
+export const setRefreshToken = (refreshToken: string) => {
+  document.cookie = `refresh-token=${refreshToken}; path=/; max-age=2592000` // 30 days
 }
 
-export const signup = async (
-  userData: any
-): Promise<{ success: boolean; message: string }> => {
-  try {
-    console.log("Signup attempt:", userData)
+// Get refresh token from cookies
+export const getRefreshToken = (): string | null => {
+  if (typeof document === "undefined") return null
 
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    setAuthToken("dummy-token")
-    return { success: true, message: "Account created successfully!" }
-  } catch (error) {
-    console.error("Signup error:", error)
-    return {
-      success: false,
-      message: "Failed to create account. Please try again.",
+  const cookies = document.cookie.split(";")
+  for (let i = 0; i < cookies.length; i++) {
+    const cookie = cookies[i].trim()
+    if (cookie.startsWith("refresh-token=")) {
+      return cookie.substring("refresh-token=".length, cookie.length)
     }
   }
+  return null
 }
+
+// Remove refresh token from cookies
+export const removeRefreshToken = () => {
+  document.cookie = "refresh-token=; path=/; max-age=0"
+}
+
+// Function to refresh the access token using refresh token
+export const refreshAccessToken = async (): Promise<{
+  success: boolean
+  token?: string
+  message?: string
+}> => {
+  try {
+    const refreshToken = getRefreshToken()
+
+    if (!refreshToken) {
+      return { success: false, message: "No refresh token found" }
+    }
+
+    const response = await fetch(
+      "http://localhost:8080/Auth/login-with-refresh-token",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify({ refreshToken }),
+      }
+    )
+
+    const data = await response.json()
+
+    if (response.ok && data.data?.token) {
+      setAuthToken(data.data.token)
+
+      // If the API also returns a new refresh token, update it
+      if (data.data.refreshToken) {
+        setRefreshToken(data.data.refreshToken)
+      }
+
+      return { success: true, token: data.data.token }
+    } else {
+      return {
+        success: false,
+        message: data.message || "Failed to refresh token",
+      }
+    }
+  } catch (error) {
+    console.error("Token refresh error:", error)
+    return { success: false, message: "Failed to refresh token" }
+  }
+}
+
+// export const login = async (
+//   username: string,
+//   password: string
+// ): Promise<{ success: boolean; message: string }> => {
+//   try {
+//     console.log("Login attempt:", { username, password })
+
+//     await new Promise((resolve) => setTimeout(resolve, 1000))
+
+//     setAuthToken("dummy-token")
+//     return { success: true, message: "Login successful!" }
+//   } catch (error) {
+//     console.error("Login error:", error)
+//     return { success: false, message: "Failed to login. Please try again." }
+//   }
+// }
+
+// export const signup = async (
+//   userData: any
+// ): Promise<{ success: boolean; message: string }> => {
+//   try {
+//     console.log("Signup attempt:", userData)
+
+//     await new Promise((resolve) => setTimeout(resolve, 1000))
+
+//     setAuthToken("dummy-token")
+//     return { success: true, message: "Account created successfully!" }
+//   } catch (error) {
+//     console.error("Signup error:", error)
+//     return {
+//       success: false,
+//       message: "Failed to create account. Please try again.",
+//     }
+//   }
+// }
 
 export const logout = (): string => {
   removeAuthToken()

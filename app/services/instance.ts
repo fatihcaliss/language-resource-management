@@ -1,6 +1,8 @@
 import { QueryClient } from "@tanstack/react-query"
 import axios, { AxiosError, AxiosRequestConfig, AxiosResponse } from "axios"
 
+import { refreshAccessToken, removeAuthToken, removeRefreshToken } from "./auth"
+
 // Create base axios instance
 export const axiosInstance = axios.create({
   // baseURL: process.env.NEXT_PUBLIC_API_URL || "https://api.example.com",
@@ -26,16 +28,104 @@ axiosInstance.interceptors.request.use(
   }
 )
 
+// Flag to prevent multiple refresh attempts at once
+let isRefreshing = false
+// Store pending requests that should be retried after token refresh
+let failedQueue: { resolve: Function; reject: Function }[] = []
+
+// Process the queue of failed requests
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach((promise) => {
+    if (error) {
+      promise.reject(error)
+    } else {
+      promise.resolve(token)
+    }
+  })
+
+  failedQueue = []
+}
+
 // Response interceptor for handling errors
 axiosInstance.interceptors.response.use(
   (response) => response,
-  (error: AxiosError) => {
-    // Handle specific error codes
-    if (error.response?.status === 401) {
-      // Handle unauthorized (e.g., redirect to login)
-      console.error("Unauthorized access")
-      // You might want to redirect to login or refresh token
+  async (error: AxiosError) => {
+    const originalRequest = error.config as AxiosRequestConfig & {
+      _retry?: boolean
     }
+
+    // If error is 401 and we haven't tried refreshing the token yet
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If already refreshing, add request to queue
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject })
+        })
+          .then((token) => {
+            if (originalRequest.headers) {
+              originalRequest.headers.Authorization = `Bearer ${token}`
+            }
+            return axiosInstance(originalRequest)
+          })
+          .catch((err) => Promise.reject(err))
+      }
+
+      originalRequest._retry = true
+      isRefreshing = true
+
+      try {
+        // Attempt to refresh the token
+        const result = await refreshAccessToken()
+
+        if (result.success && result.token) {
+          // Update token in localStorage
+          localStorage.setItem("token", result.token)
+
+          // Update Authorization header for the original request
+          if (originalRequest.headers) {
+            originalRequest.headers.Authorization = `Bearer ${result.token}`
+          }
+
+          // Process any queued requests with the new token
+          processQueue(null, result.token)
+
+          // Retry the original request with the new token
+          return axiosInstance(originalRequest)
+        } else {
+          // If refresh failed, clear auth and redirect to login
+          removeAuthToken()
+          removeRefreshToken()
+          localStorage.removeItem("token")
+
+          // Process queue with error
+          processQueue(new Error("Token refresh failed"))
+
+          // Redirect to login page
+          if (typeof window !== "undefined") {
+            window.location.href = "/auth/login"
+          }
+
+          return Promise.reject(error)
+        }
+      } catch (refreshError) {
+        // Handle refresh error
+        processQueue(refreshError)
+
+        // Clear auth and redirect to login
+        removeAuthToken()
+        removeRefreshToken()
+        localStorage.removeItem("token")
+
+        if (typeof window !== "undefined") {
+          window.location.href = "/auth/login"
+        }
+
+        return Promise.reject(refreshError)
+      } finally {
+        isRefreshing = false
+      }
+    }
+
     return Promise.reject(error?.response?.data)
   }
 )
