@@ -4,6 +4,7 @@ import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { LockOutlined, UserOutlined } from "@ant-design/icons"
+import { useMutation } from "@tanstack/react-query"
 import { Button, Card, Checkbox, Form, Input, message, Typography } from "antd"
 
 import { apiClient } from "@/app/services/instance"
@@ -14,30 +15,38 @@ const { Title, Text } = Typography
 
 export default function LoginPage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(false)
   const [messageApi, contextHolder] = message.useMessage()
+
+  const loginMutation = useMutation({
+    mutationFn: async (credentials: { email: string; password: string }) => {
+      const { data } = (await apiClient.post("/auth/login", credentials)) as {
+        data: { data: { token: string; message: string } }
+      }
+      return data
+    },
+    onSuccess: (data) => {
+      if (data.data.token) {
+        localStorage.setItem("token", data.data.token)
+        setAuthToken(data.data.token)
+        router.push("/dashboard")
+      }
+    },
+    onError: (error: any) => {
+      messageApi.error(error?.error?.detail)
+    },
+  })
 
   const onFinish = async (values: any) => {
     try {
-      setLoading(true)
       const params = {
         email: values.email,
         password: values.password,
       }
-      const { data } = (await apiClient.post("/auth/login", params)) as {
-        data: { data: { token: string; message: string } }
-      }
-      console.log("data", data)
-      localStorage.setItem("token", data.data.token)
-      setAuthToken(data.data.token)
-      if (data.data.token) {
-        // messageApi.success(data.message)
-        router.push("/dashboard")
-      } else {
-        // messageApi.error(data.message)
-      }
-    } finally {
-      setLoading(false)
+
+      // Call the login mutation
+      await loginMutation.mutateAsync(params)
+    } catch (error) {
+      console.error("Login failed:", error)
     }
   }
 
@@ -99,7 +108,7 @@ export default function LoginPage() {
                 type="primary"
                 htmlType="submit"
                 className="w-full"
-                loading={loading}
+                loading={loginMutation.isPending}
               >
                 Sign In
               </Button>

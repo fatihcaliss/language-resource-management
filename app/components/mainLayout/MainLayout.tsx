@@ -16,6 +16,7 @@ import { logout } from "../../services/auth"
 
 import "./MainLayout.css"
 
+import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 
 const { Header, Sider, Content } = Layout
@@ -34,6 +35,37 @@ const MainLayout = ({ children }: MainLayoutProps) => {
 
   const handleLogout = () => {
     logout()
+  }
+
+  const generateBreadcrumbItems = () => {
+    // Remove leading slash and split by '/'
+    const pathSegments = pathname.split("/").filter((segment) => segment)
+
+    // Always include Home as the first item
+    const items = [{ title: <Link href="/dashboard">Home</Link> }]
+
+    // Build up the breadcrumb items based on path segments
+    let currentPath = ""
+    pathSegments.forEach((segment) => {
+      currentPath += `/${segment}`
+      // Convert segment to title case (capitalize first letter of each word)
+      const title = segment
+        .split("-")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ")
+
+      items.push({ title: <Link href={currentPath}>{title}</Link> })
+    })
+
+    // Make the last item not clickable (current page)
+    if (items.length > 1) {
+      items[items.length - 1] = {
+        ...items[items.length - 1],
+        title: <span>{items[items.length - 1].title}</span>,
+      }
+    }
+
+    return items
   }
 
   const userMenuItems = [
@@ -109,7 +141,8 @@ const MainLayout = ({ children }: MainLayoutProps) => {
                   height: 64,
                 }}
               />
-              <Breadcrumb items={[{ title: "Home" }, { title: "Dashboard" }]} />
+              {/* <Breadcrumb items={[{ title: "Home" }, { title: "Dashboard" }]} /> */}
+              <Breadcrumb items={generateBreadcrumbItems()} />
             </div>
 
             <div style={{ marginRight: "24px" }}>

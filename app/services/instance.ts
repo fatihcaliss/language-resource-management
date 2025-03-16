@@ -36,7 +36,7 @@ axiosInstance.interceptors.response.use(
       console.error("Unauthorized access")
       // You might want to redirect to login or refresh token
     }
-    return Promise.reject(error)
+    return Promise.reject(error?.response?.data)
   }
 )
 
