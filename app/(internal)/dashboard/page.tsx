@@ -19,6 +19,7 @@ import {
   message,
   Modal,
   Row,
+  Select,
   Skeleton,
   Statistic,
   Tree,
@@ -35,7 +36,15 @@ export default function DashboardPage() {
   const [username, setUsername] = useState("Admin")
   const [messageApi, contextHolder] = message.useMessage()
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
   const [form] = Form.useForm()
+  const [projectForm] = Form.useForm()
+
+  const { data: userData, isFetching: isUserDataFetching } = useQuery({
+    queryKey: ["userData"],
+    queryFn: () => apiClient.get("/Users/get-user"),
+    select: (data: any) => data.data.data,
+  })
 
   const {
     data: environmentList,
@@ -67,6 +76,24 @@ export default function DashboardPage() {
     },
   })
 
+  const addNewProjectMutation = useMutation({
+    mutationFn: async (params: { name: string; environmentId: string }) => {
+      const { data } = (await apiClient.post(
+        "/ApplicationTypes/create",
+        params
+      )) as {
+        data: { data: boolean }
+      }
+      return data
+    },
+    onSuccess: (data) => {
+      console.log("data", data)
+      refetch()
+    },
+    onError: (error: any) => {
+      messageApi.error(error?.error?.detail)
+    },
+  })
   // Transform environment data for tree component
   const transformEnvironmentData = (data: any[]): TreeDataNode[] => {
     return data?.map((env, envIndex) => ({
@@ -116,14 +143,6 @@ export default function DashboardPage() {
 
   const treeData = isSuccess ? transformEnvironmentData(environmentList) : []
 
-  // In a real application, you would fetch user data from an API
-  useEffect(() => {
-    // Simulate fetching user data
-    setTimeout(() => {
-      setUsername("Admin User")
-    }, 1000)
-  }, [])
-
   const showModal = () => {
     setIsModalOpen(true)
   }
@@ -144,6 +163,30 @@ export default function DashboardPage() {
     }
   }
 
+  // New functions for the project modal
+  const showProjectModal = () => {
+    setIsProjectModalOpen(true)
+  }
+
+  const handleProjectCancel = () => {
+    projectForm.resetFields()
+    setIsProjectModalOpen(false)
+  }
+
+  const handleProjectSubmit = async (values: {
+    name: string
+    environmentId: string
+  }) => {
+    try {
+      await addNewProjectMutation.mutateAsync(values)
+      messageApi.success("Project created successfully!")
+      projectForm.resetFields()
+      setIsProjectModalOpen(false)
+    } catch (error) {
+      console.error("Error creating project:", error)
+    }
+  }
+
   return (
     <>
       {contextHolder}
@@ -151,7 +194,11 @@ export default function DashboardPage() {
         {contextHolder}
         <MainLayout>
           <div className="dashboard-container">
-            <Title level={2}>Welcome, {username}!</Title>
+            {isUserDataFetching ? (
+              <Skeleton.Input active className="mb-3" />
+            ) : (
+              <Title level={2}>Welcome, {userData?.fullName}!</Title>
+            )}
             <Title level={5} className="mb-6 text-gray-500">
               Here's an overview of your language resources
             </Title>
@@ -221,20 +268,16 @@ export default function DashboardPage() {
                   variant="borderless"
                 >
                   <ul className="list-disc pl-5">
-                    {/* <li className="mb-2">
-                      <Button
-                        type="default"
-                        onClick={showModal}
-                        className="p-0"
-                        style={{ fontSize: "inherit" }}
-                      >
+                    <li className="mb-2">
+                      <Button type="default" onClick={showModal}>
                         Create new environment
                       </Button>
-                    </li> */}
-                    <li className="mb-2">Create new project</li>
-                    <li className="mb-2">Add team member</li>
-                    <li className="mb-2">Import language resources</li>
-                    <li className="mb-2">Generate reports</li>
+                    </li>
+                    <li className="mb-2">
+                      <Button type="default" onClick={showProjectModal}>
+                        Create new project
+                      </Button>
+                    </li>
                   </ul>
                 </Card>
               </Col>
@@ -243,26 +286,14 @@ export default function DashboardPage() {
             {/* Environment Tree Section */}
             <Row gutter={[16, 16]} className="mt-6">
               <Col xs={24}>
-                <Card
-                  title="Environment Structure"
-                  variant="borderless"
-                  extra={
-                    <Button
-                      type="primary"
-                      icon={<PlusOutlined />}
-                      onClick={showModal}
-                    >
-                      Add Environment
-                    </Button>
-                  }
-                >
+                <Card title="Environment Structure" variant="borderless">
                   {isFetching ? (
                     <Skeleton active />
                   ) : (
                     <Tree
                       showLine
                       switcherIcon={<DownOutlined />}
-                      defaultExpandedKeys={["0"]}
+                      // defaultExpandedKeys={["0"]}
                       onSelect={(selectedKeys, info) => {
                         console.log("selected", selectedKeys, info)
                       }}
@@ -300,6 +331,55 @@ export default function DashboardPage() {
                 ]}
               >
                 <Input placeholder="Enter environment name" />
+              </Form.Item>
+            </Form>
+          </Modal>
+
+          {/* Add Project Modal */}
+          <Modal
+            title="Add New Project"
+            open={isProjectModalOpen}
+            onCancel={handleProjectCancel}
+            onOk={() => projectForm.submit()}
+            okText="Create"
+            cancelText="Cancel"
+          >
+            <Form
+              form={projectForm}
+              layout="vertical"
+              onFinish={handleProjectSubmit}
+              autoComplete="off"
+            >
+              <Form.Item
+                name="name"
+                label="Project Name"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please enter project name",
+                  },
+                ]}
+              >
+                <Input placeholder="Enter project name" />
+              </Form.Item>
+
+              <Form.Item
+                name="environmentId"
+                label="Environment"
+                rules={[
+                  {
+                    required: true,
+                    message: "Please select an environment",
+                  },
+                ]}
+              >
+                <Select placeholder="Select an environment">
+                  {environmentList?.map((env: any) => (
+                    <Select.Option key={env.id} value={env.id}>
+                      {env.name}
+                    </Select.Option>
+                  ))}
+                </Select>
               </Form.Item>
             </Form>
           </Modal>
