@@ -7,155 +7,184 @@ import {
   PlusOutlined,
   SearchOutlined,
 } from "@ant-design/icons"
+import { useMutation, useQuery } from "@tanstack/react-query"
 import { Button, Input, message, Popconfirm, Space, Table } from "antd"
 import type { ColumnsType } from "antd/es/table"
 
 import MainLayout from "@/app/components/mainLayout/MainLayout"
-import { setAuthToken } from "@/app/services/auth"
 import { apiClient } from "@/app/services/instance"
 
 // Define the interface for our resource data
-interface ResourceItem {
+
+interface IResource {
   id: string
-  domain: string
-  resourceType: string
-  keyValue: string
-  cultureValue: string
-  cultureCode: string
+  key: string
+  value: string
+  langId: string
+  langCode: string
+  applicationTypeId: string
+  applicationType: string
+  resourceType: {
+    id: number
+    name: string
+  }
+  environmentId: string
+}
+interface ResourceItem {
+  resources: {
+    pageNumber: number
+    pageSize: number
+    totalNumberOfPages: number
+    totalNumberOfRecords: number
+    results: IResource[]
+  }
+  filters: {
+    resourceTypes: {
+      id: number
+      name: string
+    }[]
+  }
 }
 
 const ResourcesManagementPage: React.FC = () => {
   const [messageApi, contextHolder] = message.useMessage()
 
-  const [data, setData] = useState<ResourceItem[]>([])
-  const [loading, setLoading] = useState<boolean>(false)
+  const [data, setData] = useState<IResource[]>([])
   const [searchText, setSearchText] = useState<string>("")
+  const [tableFilters, setTableFilters] = useState<{
+    resourceTypes: {
+      id: number
+      name: string
+    }[]
+  }>({ resourceTypes: [] })
+  const [requestFilters, setRequestFilters] = useState<any>({})
+  const [tablePagination, setTablePagination] = useState<{
+    page?: number
+    pageSize?: number
+    totalNumberOfPages?: number
+    totalNumberOfRecords?: number
+  }>({ page: 1, pageSize: 10, totalNumberOfPages: 0, totalNumberOfRecords: 0 })
+  const { data: environmentList, isSuccess } = useQuery({
+    queryKey: ["environmentList"],
+    queryFn: () => apiClient.get("/Environments/list"),
+    select: (data: any) => data.data.data,
+  })
 
-  // Mock data - replace with actual API call
+  const getResourcesMutation = useMutation({
+    mutationFn: async (params: {
+      environmentId: string
+      applicationTypeId: string
+      resourceTypeId: number | null
+      searchText: string
+      page: number
+      pageSize: number
+    }) => {
+      const { data } = (await apiClient.post("/Resources/list", params)) as {
+        data: { data: ResourceItem }
+      }
+      return data
+    },
+    onSuccess: (data) => {
+      console.log("data", data?.data)
+      setData(data?.data?.resources.results)
+      setTableFilters(data?.data?.filters)
+      setTablePagination({
+        page: data?.data?.resources.pageNumber,
+        pageSize: data?.data?.resources.pageSize,
+        totalNumberOfPages: data?.data?.resources.totalNumberOfPages,
+        totalNumberOfRecords: data?.data?.resources.totalNumberOfRecords,
+      })
+    },
+    onError: (error: any) => {
+      messageApi.error(error?.error?.detail)
+    },
+  })
+
   useEffect(() => {
-    setLoading(true)
-    // Simulate API call
-    setTimeout(() => {
-      const mockData: ResourceItem[] = [
-        {
-          id: "1",
-          domain: "Frontend",
-          resourceType: "Label",
-          keyValue: "welcome_message",
-          cultureValue: "Welcome to our application",
-          cultureCode: "en-US",
-        },
-        {
-          id: "2",
-          domain: "Backend",
-          resourceType: "Error",
-          keyValue: "invalid_credentials",
-          cultureValue: "Invalid username or password",
-          cultureCode: "en-US",
-        },
-        {
-          id: "3",
-          domain: "Frontend",
-          resourceType: "Button",
-          keyValue: "submit_button",
-          cultureValue: "Submit",
-          cultureCode: "en-US",
-        },
-        {
-          id: "4",
-          domain: "Frontend",
-          resourceType: "Label",
-          keyValue: "welcome_message",
-          cultureValue: "Bienvenido a nuestra aplicación",
-          cultureCode: "es-ES",
-        },
-      ]
-      setData(mockData)
-      setLoading(false)
-    }, 1000)
-  }, [])
-
-  // Handle delete resource
-  const handleDelete = (id: string) => {
-    setData(data.filter((item) => item.id !== id))
-    messageApi.success("Resource deleted successfully")
-  }
-
-  // Filter data based on search text
-  const filteredData = data.filter((item) =>
-    Object.values(item).some((val) =>
-      val.toString().toLowerCase().includes(searchText.toLowerCase())
-    )
-  )
+    if (isSuccess) {
+      getResourcesMutation.mutateAsync({
+        environmentId: environmentList[0].id,
+        applicationTypeId: environmentList[0].applicationTypes[0].id,
+        resourceTypeId:
+          (requestFilters.resourceTypes &&
+            requestFilters.resourceTypes?.find((type: any) => type.id === 3)
+              ?.id) ||
+          null,
+        searchText: "",
+        page: tablePagination.page || 1,
+        pageSize: tablePagination.pageSize || 10,
+      })
+    }
+  }, [isSuccess, JSON.stringify(tableFilters), JSON.stringify(tablePagination)])
 
   // Define table columns
-  const columns: ColumnsType<ResourceItem> = [
+  const columns: ColumnsType<IResource> = [
     {
-      title: "Domain",
-      dataIndex: "domain",
-      key: "domain",
-      sorter: (a, b) => a.domain.localeCompare(b.domain),
+      title: "Application",
+      dataIndex: "applicationType",
+      key: "applicationType",
+      sorter: (a, b) => a.applicationType.localeCompare(b.applicationType),
     },
     {
       title: "Resource Type",
       dataIndex: "resourceType",
       key: "resourceType",
-      sorter: (a, b) => a.resourceType.localeCompare(b.resourceType),
-      filters: [
-        { text: "Label", value: "Label" },
-        { text: "Button", value: "Button" },
-        { text: "Error", value: "Error" },
-      ],
-      onFilter: (value, record) => record.resourceType === value,
+      filters: tableFilters.resourceTypes.map((type) => ({
+        text: type.name,
+        value: type.id,
+      })),
+      onFilter: (value, record) => record.resourceType.id === value,
+      sorter: (a, b) => a.resourceType.name.localeCompare(b.resourceType.name),
+      render: (_, record) => record.resourceType.name,
     },
     {
       title: "Key Value",
-      dataIndex: "keyValue",
-      key: "keyValue",
-      sorter: (a, b) => a.keyValue.localeCompare(b.keyValue),
+      dataIndex: "key",
+      key: "key",
+      sorter: (a, b) => a.key.localeCompare(b.key),
     },
     {
-      title: "Culture Value",
-      dataIndex: "cultureValue",
-      key: "cultureValue",
+      title: "Value",
+      dataIndex: "value",
+      key: "value",
       ellipsis: true,
     },
     {
       title: "Culture Code",
-      dataIndex: "cultureCode",
-      key: "cultureCode",
-      sorter: (a, b) => a.cultureCode.localeCompare(b.cultureCode),
+      dataIndex: "langCode",
+      key: "langCode",
+      sorter: (a, b) => a.langCode.localeCompare(b.langCode),
       filters: [
         { text: "English (US)", value: "en-US" },
         { text: "Spanish (Spain)", value: "es-ES" },
       ],
-      onFilter: (value, record) => record.cultureCode === value,
+      onFilter: (value, record) => record.langCode === value,
     },
-    {
-      title: "Actions",
-      key: "actions",
-      render: (_, record) => (
-        <Space size="middle">
-          <Button
-            type="primary"
-            icon={<EditOutlined />}
-            onClick={() => messageApi.info(`Edit resource ${record.id}`)}
-          >
-            Edit
-          </Button>
-          <Popconfirm
-            title="Are you sure you want to delete this resource?"
-            onConfirm={() => handleDelete(record.id)}
-            okText="Yes"
-            cancelText="No"
-          >
-            <Button danger icon={<DeleteOutlined />}>
-              Delete
-            </Button>
-          </Popconfirm>
-        </Space>
-      ),
-    },
+    // {
+    //   title: "Actions",
+    //   key: "actions",
+    //   render: (_, record) => (
+    //     <Space size="middle">
+    //       <Button
+    //         type="primary"
+    //         icon={<EditOutlined />}
+    //         onClick={() => messageApi.info(`Edit resource ${record.id}`)}
+    //       >
+    //         Edit
+    //       </Button>
+    //       <Popconfirm
+    //         title="Are you sure you want to delete this resource?"
+    //         onConfirm={() => handleDelete(record.id)}
+    //         okText="Yes"
+    //         cancelText="No"
+    //       >
+    //         <Button danger icon={<DeleteOutlined />}>
+    //           Delete
+    //         </Button>
+    //       </Popconfirm>
+    //     </Space>
+    //   ),
+    // },
   ]
 
   return (
@@ -173,14 +202,7 @@ const ResourcesManagementPage: React.FC = () => {
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
               />
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                // onClick={() => messageApi.info("Add new resource")}
-                // onClick={() =>
-                //   addNewResourceMutation.mutateAsync({ name: "test" })
-                // }
-              >
+              <Button type="primary" icon={<PlusOutlined />}>
                 Add New Resource
               </Button>
             </div>
@@ -189,13 +211,42 @@ const ResourcesManagementPage: React.FC = () => {
           <Table
             scroll={{ x: 1000 }}
             columns={columns}
-            dataSource={filteredData}
+            dataSource={data}
             rowKey="id"
-            loading={loading}
+            loading={getResourcesMutation.isPending}
             pagination={{
-              pageSize: 10,
+              defaultCurrent: 1,
+              defaultPageSize: 10,
+              pageSize: tablePagination.pageSize || 10,
+              current: tablePagination.page || 1,
+              total: tablePagination.totalNumberOfRecords || 0,
+              pageSizeOptions: [10, 20, 50, 100],
               showSizeChanger: true,
-              showTotal: (total) => `Total ${total} items`,
+              showQuickJumper: false,
+              showTotal: (total, range) =>
+                `${range[0]}-${range[1]} of ${total} items`,
+            }}
+            onChange={(pagination, filters, sorter, extra) => {
+              console.log("pagination", pagination)
+              console.log("filters", filters)
+              console.log("sorter", sorter)
+              console.log("extra", extra)
+              setTableFilters({
+                resourceTypes: (filters.resourceTypes || []) as unknown as {
+                  id: number
+                  name: string
+                }[],
+              })
+              setRequestFilters({
+                resourceTypeId: (filters.resourceTypeId ||
+                  []) as unknown as number,
+              })
+              setTablePagination({
+                page: pagination.current,
+                pageSize: pagination.pageSize,
+                totalNumberOfPages: pagination.total,
+                totalNumberOfRecords: pagination.total,
+              })
             }}
           />
         </div>
