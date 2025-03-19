@@ -12,111 +12,23 @@ import { Button, Input, message, Popconfirm, Space, Table } from "antd"
 import type { ColumnsType } from "antd/es/table"
 
 import MainLayout from "@/app/components/mainLayout/MainLayout"
+import useResources, { IResource } from "@/app/hooks/useResources"
 import { apiClient } from "@/app/services/instance"
 
-// Define the interface for our resource data
-
-interface IResource {
-  id: string
-  key: string
-  value: string
-  langId: string
-  langCode: string
-  applicationTypeId: string
-  applicationType: string
-  resourceType: {
-    id: number
-    name: string
-  }
-  environmentId: string
-}
-interface ResourceItem {
-  resources: {
-    pageNumber: number
-    pageSize: number
-    totalNumberOfPages: number
-    totalNumberOfRecords: number
-    results: IResource[]
-  }
-  filters: {
-    resourceTypes: {
-      id: number
-      name: string
-    }[]
-  }
-}
-
 const ResourcesManagementPage: React.FC = () => {
-  const [messageApi, contextHolder] = message.useMessage()
-
-  const [data, setData] = useState<IResource[]>([])
-  const [searchText, setSearchText] = useState<string>("")
-  const [tableFilters, setTableFilters] = useState<{
-    resourceTypes: {
-      id: number
-      name: string
-    }[]
-  }>({ resourceTypes: [] })
-  const [requestFilters, setRequestFilters] = useState<any>({})
-  const [tablePagination, setTablePagination] = useState<{
-    page?: number
-    pageSize?: number
-    totalNumberOfPages?: number
-    totalNumberOfRecords?: number
-  }>({ page: 1, pageSize: 10, totalNumberOfPages: 0, totalNumberOfRecords: 0 })
-
-  const { data: environmentList, isSuccess } = useQuery({
-    queryKey: ["environmentList"],
-    queryFn: () => apiClient.get("/Environments/list"),
-    select: (data: any) => data.data.data,
-  })
-
-  const getResourcesMutation = useMutation({
-    mutationFn: async (params: {
-      environmentId: string
-      applicationTypeId: string
-      resourceTypeId: number | null
-      searchText: string
-      page: number
-      pageSize: number
-    }) => {
-      const { data } = (await apiClient.post("/Resources/list", params)) as {
-        data: { data: ResourceItem }
-      }
-      return data
-    },
-    onSuccess: (data) => {
-      console.log("data", data?.data)
-      setData(data?.data?.resources.results)
-      setTableFilters(data?.data?.filters)
-      setTablePagination({
-        page: data?.data?.resources.pageNumber,
-        pageSize: data?.data?.resources.pageSize,
-        totalNumberOfPages: data?.data?.resources.totalNumberOfPages,
-        totalNumberOfRecords: data?.data?.resources.totalNumberOfRecords,
-      })
-    },
-    onError: (error: any) => {
-      messageApi.error(error?.error?.detail)
-    },
-  })
-
-  useEffect(() => {
-    if (isSuccess) {
-      getResourcesMutation.mutateAsync({
-        environmentId: environmentList[0].id,
-        applicationTypeId: environmentList[0].applicationTypes[0].id,
-        resourceTypeId:
-          (requestFilters.resourceTypes &&
-            requestFilters.resourceTypes?.find((type: any) => type.id === 3)
-              ?.id) ||
-          null,
-        searchText: "",
-        page: tablePagination.page || 1,
-        pageSize: tablePagination.pageSize || 10,
-      })
-    }
-  }, [isSuccess])
+  const {
+    contextHolder,
+    data,
+    searchText,
+    setSearchText,
+    tableFilters,
+    tablePagination,
+    isLoading,
+    updateFiltersAndPagination,
+    selectedEnvironment,
+    setSelectedEnvironment,
+    environmentList,
+  } = useResources()
 
   // Define table columns
   const columns: ColumnsType<IResource> = [
@@ -214,7 +126,7 @@ const ResourcesManagementPage: React.FC = () => {
             columns={columns}
             dataSource={data}
             rowKey="id"
-            loading={getResourcesMutation.isPending}
+            loading={isLoading}
             pagination={{
               defaultCurrent: 1,
               defaultPageSize: 10,
@@ -228,31 +140,7 @@ const ResourcesManagementPage: React.FC = () => {
                 `${range[0]}-${range[1]} of ${total} items`,
             }}
             onChange={(pagination, filters, sorter, extra) => {
-              setTableFilters({
-                resourceTypes: (filters.resourceTypes || []) as unknown as {
-                  id: number
-                  name: string
-                }[],
-              })
-              setRequestFilters({
-                resourceTypeId: (filters.resourceTypeId ||
-                  []) as unknown as number,
-              })
-              setTablePagination({
-                page: pagination.current,
-                pageSize: pagination.pageSize,
-                totalNumberOfPages: pagination.total,
-                totalNumberOfRecords: pagination.total,
-              })
-              return getResourcesMutation.mutateAsync({
-                environmentId: environmentList[0].id,
-                applicationTypeId: environmentList[0].applicationTypes[0].id,
-                resourceTypeId: (filters.resourceType ||
-                  []) as unknown as number,
-                searchText: "",
-                page: pagination.current || 1,
-                pageSize: pagination.pageSize || 10,
-              })
+              return updateFiltersAndPagination(pagination, filters)
             }}
           />
         </div>
