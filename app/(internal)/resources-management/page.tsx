@@ -8,7 +8,15 @@ import {
   SearchOutlined,
 } from "@ant-design/icons"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { Button, Input, message, Popconfirm, Space, Table } from "antd"
+import {
+  Button,
+  Input,
+  message,
+  Popconfirm,
+  Space,
+  Table,
+  TreeSelect,
+} from "antd"
 import type { ColumnsType } from "antd/es/table"
 
 import MainLayout from "@/app/components/mainLayout/MainLayout"
@@ -28,7 +36,14 @@ const ResourcesManagementPage: React.FC = () => {
     selectedEnvironment,
     setSelectedEnvironment,
     environmentList,
+    isEnvironmentListLoading,
+    selectedApplicationType,
+    setSelectedApplicationType,
+    requestFilters,
   } = useResources()
+
+  const [selectedValue, setSelectedValue] = useState<string>()
+  const [filteredInfo, setFilteredInfo] = useState<Record<string, any>>({})
 
   // Define table columns
   const columns: ColumnsType<IResource> = [
@@ -46,6 +61,7 @@ const ResourcesManagementPage: React.FC = () => {
         text: type.name,
         value: type.id,
       })),
+      filteredValue: filteredInfo.resourceType || null,
       onFilter: (value, record) => record.resourceType.id === value,
       sorter: (a, b) => a.resourceType.name.localeCompare(b.resourceType.name),
       render: (_, record) => record.resourceType.name,
@@ -67,10 +83,11 @@ const ResourcesManagementPage: React.FC = () => {
       dataIndex: "langCode",
       key: "langCode",
       sorter: (a, b) => a.langCode.localeCompare(b.langCode),
-      filters: [
-        { text: "English (US)", value: "en-US" },
-        { text: "Spanish (Spain)", value: "es-ES" },
-      ],
+      filters: tableFilters.languages.map((code) => ({
+        text: code.name,
+        value: code.id,
+      })),
+      filteredValue: filteredInfo.langCode || null,
       onFilter: (value, record) => record.langCode === value,
     },
     // {
@@ -100,6 +117,72 @@ const ResourcesManagementPage: React.FC = () => {
     // },
   ]
 
+  const treeData =
+    environmentList?.map((environment: any) => ({
+      label: environment.name,
+      value: environment.id,
+      disabled: true,
+      children: environment.applicationTypes?.map((applicationType: any) => ({
+        label: applicationType.name,
+        value: `${environment.id}|${applicationType.id}`,
+      })),
+    })) || []
+
+  const handleEnvironmentChange = (value: string) => {
+    if (value && value.includes("|")) {
+      setFilteredInfo({})
+
+      // This is an application type selection
+      const [environmentId, applicationTypeId] = value.split("|")
+
+      // Find the selected environment
+      const environment = environmentList.find(
+        (env: any) => env.id === environmentId
+      )
+
+      const applicationType = environment?.applicationTypes.find(
+        (app: any) => app.id === applicationTypeId
+      )
+
+      if (environment) {
+        setSelectedEnvironment({
+          id: environmentId,
+          name: environment.name,
+          applicationTypes: environment.applicationTypes,
+        })
+
+        setSelectedApplicationType({
+          id: applicationTypeId,
+          name: applicationType.name,
+        })
+
+        // Trigger data fetch with the new selection
+        updateFiltersAndPagination(
+          {
+            current: 1,
+            pageSize: tablePagination.pageSize,
+          },
+          {
+            selectedApplicationType: {
+              id: applicationTypeId,
+              name: applicationType.name,
+            },
+            selectedEnvironment: {
+              id: environmentId,
+              name: environment.name,
+              applicationTypes: environment.applicationTypes,
+            },
+          }
+        )
+      }
+    }
+  }
+
+  // console.log("selectedEnvironment", selectedEnvironment)
+  // console.log("selectedApplicationType", selectedApplicationType)
+  // console.log("environmentList", environmentList)
+  // console.log("tableFilters", tableFilters)
+  console.log("selectedValue", selectedValue)
   return (
     <>
       {contextHolder}
@@ -108,13 +191,28 @@ const ResourcesManagementPage: React.FC = () => {
           <div className="mb-6">
             <h1 className="text-2xl font-bold mb-4">Resources Management</h1>
             <div className="flex justify-between mb-4">
-              <Input
-                placeholder="Search resources..."
-                prefix={<SearchOutlined />}
-                style={{ width: 300 }}
-                value={searchText}
-                onChange={(e) => setSearchText(e.target.value)}
-              />
+              <div className="flex gap-4 w-1/2">
+                <TreeSelect
+                  placeholder="Select Environment"
+                  className="flex-1"
+                  value={selectedValue}
+                  onChange={handleEnvironmentChange}
+                  treeData={treeData}
+                  loading={isEnvironmentListLoading}
+                  // allowClear
+                  treeLine
+                  treeDefaultExpandAll
+                  defaultValue={selectedValue}
+                />
+                <Input
+                  placeholder="Search resources..."
+                  prefix={<SearchOutlined />}
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  className="flex-1"
+                />
+              </div>
+
               <Button type="primary" icon={<PlusOutlined />}>
                 Add New Resource
               </Button>
@@ -140,6 +238,7 @@ const ResourcesManagementPage: React.FC = () => {
                 `${range[0]}-${range[1]} of ${total} items`,
             }}
             onChange={(pagination, filters, sorter, extra) => {
+              // console.log("filters", filters)
               return updateFiltersAndPagination(pagination, filters)
             }}
           />
