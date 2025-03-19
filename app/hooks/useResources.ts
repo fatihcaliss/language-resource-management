@@ -115,33 +115,47 @@ const useResources = () => {
   })
 
   useEffect(() => {
-    if (isSuccess) {
-      //   console.log("inside1", requestFilters)
-      //   console.log("inside2", tableFilters)
-      getResourcesMutation.mutateAsync({
-        environmentId: environmentList[0].id,
-        applicationTypeId: environmentList[0].applicationTypes[0].id,
-        resourceTypeIds:
-          (requestFilters.resourceTypes &&
-            requestFilters.resourceTypes?.find((type: any) => type.id === 3)
-              ?.id) ||
-          null,
-        searchText: searchText,
-        page: tablePagination.page || 1,
-        pageSize: tablePagination.pageSize || 10,
-        languageCodes: requestFilters.langCode || null,
-      })
-      setSelectedEnvironment({
-        applicationTypes: environmentList[0].applicationTypes,
-        id: environmentList[0].id,
-        name: environmentList[0].name,
-      })
-      setSelectedApplicationType({
-        id: environmentList[0].applicationTypes[0].id,
-        name: environmentList[0].applicationTypes[0].name,
-      })
+    if (isSuccess && environmentList && environmentList.length > 0) {
+      if (!selectedEnvironment.id) {
+        const defaultEnv = environmentList[0]
+
+        setSelectedEnvironment({
+          applicationTypes: defaultEnv.applicationTypes,
+          id: defaultEnv.id,
+          name: defaultEnv.name,
+        })
+
+        if (
+          defaultEnv.applicationTypes &&
+          defaultEnv.applicationTypes.length > 0
+        ) {
+          const defaultAppType = defaultEnv.applicationTypes[0]
+          setSelectedApplicationType({
+            id: defaultAppType.id,
+            name: defaultAppType.name,
+          })
+        }
+      }
+
+      if (selectedEnvironment.id && selectedApplicationType.id) {
+        getResourcesMutation.mutateAsync({
+          environmentId: selectedEnvironment.id,
+          applicationTypeId: selectedApplicationType.id,
+          resourceTypeIds: (requestFilters.resourceTypes ||
+            []) as unknown as number[],
+          searchText: searchText,
+          page: tablePagination.page || 1,
+          pageSize: tablePagination.pageSize || 10,
+          languageCodes: requestFilters.langCode || [],
+        })
+      }
     }
-  }, [isSuccess, searchText])
+  }, [
+    isSuccess,
+    searchText,
+    // selectedEnvironment.id,
+    // selectedApplicationType.id,
+  ])
 
   const fetchResources = (pagination: any, filters: any) => {
     return getResourcesMutation.mutateAsync({

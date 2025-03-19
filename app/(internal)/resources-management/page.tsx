@@ -1,6 +1,6 @@
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import {
   DeleteOutlined,
   EditOutlined,
@@ -42,8 +42,135 @@ const ResourcesManagementPage: React.FC = () => {
     requestFilters,
   } = useResources()
 
-  const [selectedValue, setSelectedValue] = useState<string>()
   const [filteredInfo, setFilteredInfo] = useState<Record<string, any>>({})
+
+  // Derive selectedValue from selectedEnvironment and selectedApplicationType
+  const selectedValue = useMemo(() => {
+    if (selectedEnvironment?.id && selectedApplicationType?.id) {
+      return `${selectedEnvironment.id}|${selectedApplicationType.id}`
+    }
+    return undefined
+  }, [selectedEnvironment, selectedApplicationType])
+
+  // Transform environmentList to treeData with proper format
+  const treeData = useMemo(() => {
+    if (!environmentList) return []
+
+    return environmentList.map((environment: any) => ({
+      label: environment.name,
+      value: environment.id,
+      disabled: !environment.applicationTypes?.length, // Only disable if no apps
+      children:
+        environment.applicationTypes?.map((applicationType: any) => ({
+          label: applicationType.name,
+          value: `${environment.id}|${applicationType.id}`,
+        })) || [],
+    }))
+  }, [environmentList])
+
+  // Handle environment/application type selection
+  const handleEnvironmentChange = (value: string) => {
+    // Clear table filters when changing environment
+    setFilteredInfo({})
+
+    if (value && value.includes("|")) {
+      // This is an application type selection
+      const [environmentId, applicationTypeId] = value.split("|")
+
+      // Find the selected environment
+      const environment = environmentList.find(
+        (env: any) => env.id === environmentId
+      )
+
+      if (environment) {
+        const applicationType = environment?.applicationTypes.find(
+          (app: any) => app.id === applicationTypeId
+        )
+
+        if (applicationType) {
+          // Set selected environment and application type
+          setSelectedEnvironment({
+            id: environmentId,
+            name: environment.name,
+            applicationTypes: environment.applicationTypes,
+          })
+
+          setSelectedApplicationType({
+            id: applicationTypeId,
+            name: applicationType.name,
+          })
+
+          // Trigger data fetch with the new selection
+          updateFiltersAndPagination(
+            {
+              current: 1,
+              pageSize: tablePagination.pageSize,
+            },
+            {
+              selectedApplicationType: {
+                id: applicationTypeId,
+                name: applicationType.name,
+              },
+              selectedEnvironment: {
+                id: environmentId,
+                name: environment.name,
+                applicationTypes: environment.applicationTypes,
+              },
+            }
+          )
+        }
+      }
+    }
+  }
+
+  // Set default environment and application type on initial load
+  useEffect(() => {
+    if (
+      environmentList &&
+      environmentList.length > 0 &&
+      (!selectedEnvironment.id || !selectedApplicationType.id)
+    ) {
+      const defaultEnv = environmentList[0]
+
+      if (
+        defaultEnv.applicationTypes &&
+        defaultEnv.applicationTypes.length > 0
+      ) {
+        const defaultAppType = defaultEnv.applicationTypes[0]
+
+        // Set selected environment and application type
+        setSelectedEnvironment({
+          id: defaultEnv.id,
+          name: defaultEnv.name,
+          applicationTypes: defaultEnv.applicationTypes,
+        })
+
+        setSelectedApplicationType({
+          id: defaultAppType.id,
+          name: defaultAppType.name,
+        })
+
+        // Trigger initial data fetch
+        updateFiltersAndPagination(
+          {
+            current: 1,
+            pageSize: tablePagination.pageSize,
+          },
+          {
+            selectedApplicationType: {
+              id: defaultAppType.id,
+              name: defaultAppType.name,
+            },
+            selectedEnvironment: {
+              id: defaultEnv.id,
+              name: defaultEnv.name,
+              applicationTypes: defaultEnv.applicationTypes,
+            },
+          }
+        )
+      }
+    }
+  }, [environmentList])
 
   // Define table columns
   const columns: ColumnsType<IResource> = [
@@ -117,67 +244,6 @@ const ResourcesManagementPage: React.FC = () => {
     // },
   ]
 
-  const treeData =
-    environmentList?.map((environment: any) => ({
-      label: environment.name,
-      value: environment.id,
-      disabled: true,
-      children: environment.applicationTypes?.map((applicationType: any) => ({
-        label: applicationType.name,
-        value: `${environment.id}|${applicationType.id}`,
-      })),
-    })) || []
-
-  const handleEnvironmentChange = (value: string) => {
-    if (value && value.includes("|")) {
-      setFilteredInfo({})
-
-      // This is an application type selection
-      const [environmentId, applicationTypeId] = value.split("|")
-
-      // Find the selected environment
-      const environment = environmentList.find(
-        (env: any) => env.id === environmentId
-      )
-
-      const applicationType = environment?.applicationTypes.find(
-        (app: any) => app.id === applicationTypeId
-      )
-
-      if (environment) {
-        setSelectedEnvironment({
-          id: environmentId,
-          name: environment.name,
-          applicationTypes: environment.applicationTypes,
-        })
-
-        setSelectedApplicationType({
-          id: applicationTypeId,
-          name: applicationType.name,
-        })
-
-        // Trigger data fetch with the new selection
-        updateFiltersAndPagination(
-          {
-            current: 1,
-            pageSize: tablePagination.pageSize,
-          },
-          {
-            selectedApplicationType: {
-              id: applicationTypeId,
-              name: applicationType.name,
-            },
-            selectedEnvironment: {
-              id: environmentId,
-              name: environment.name,
-              applicationTypes: environment.applicationTypes,
-            },
-          }
-        )
-      }
-    }
-  }
-
   // console.log("selectedEnvironment", selectedEnvironment)
   // console.log("selectedApplicationType", selectedApplicationType)
   // console.log("environmentList", environmentList)
@@ -199,10 +265,8 @@ const ResourcesManagementPage: React.FC = () => {
                   onChange={handleEnvironmentChange}
                   treeData={treeData}
                   loading={isEnvironmentListLoading}
-                  // allowClear
                   treeLine
                   treeDefaultExpandAll
-                  defaultValue={selectedValue}
                 />
                 <Input
                   placeholder="Search resources..."
