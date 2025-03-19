@@ -99,9 +99,11 @@ export default function DashboardPage() {
     return data?.map((env, envIndex) => ({
       title: env.name,
       key: `${envIndex}`,
+      value: env.id,
       children: env.applicationTypes.map((app: any, appIndex: number) => ({
         title: app.name,
         key: `${envIndex}-${appIndex}`,
+        value: app.id,
       })),
     }))
   }

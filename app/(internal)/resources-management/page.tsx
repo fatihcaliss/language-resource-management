@@ -64,6 +64,7 @@ const ResourcesManagementPage: React.FC = () => {
     totalNumberOfPages?: number
     totalNumberOfRecords?: number
   }>({ page: 1, pageSize: 10, totalNumberOfPages: 0, totalNumberOfRecords: 0 })
+
   const { data: environmentList, isSuccess } = useQuery({
     queryKey: ["environmentList"],
     queryFn: () => apiClient.get("/Environments/list"),
@@ -115,7 +116,7 @@ const ResourcesManagementPage: React.FC = () => {
         pageSize: tablePagination.pageSize || 10,
       })
     }
-  }, [isSuccess, JSON.stringify(tableFilters), JSON.stringify(tablePagination)])
+  }, [isSuccess])
 
   // Define table columns
   const columns: ColumnsType<IResource> = [
@@ -227,10 +228,6 @@ const ResourcesManagementPage: React.FC = () => {
                 `${range[0]}-${range[1]} of ${total} items`,
             }}
             onChange={(pagination, filters, sorter, extra) => {
-              console.log("pagination", pagination)
-              console.log("filters", filters)
-              console.log("sorter", sorter)
-              console.log("extra", extra)
               setTableFilters({
                 resourceTypes: (filters.resourceTypes || []) as unknown as {
                   id: number
@@ -246,6 +243,15 @@ const ResourcesManagementPage: React.FC = () => {
                 pageSize: pagination.pageSize,
                 totalNumberOfPages: pagination.total,
                 totalNumberOfRecords: pagination.total,
+              })
+              return getResourcesMutation.mutateAsync({
+                environmentId: environmentList[0].id,
+                applicationTypeId: environmentList[0].applicationTypes[0].id,
+                resourceTypeId: (filters.resourceType ||
+                  []) as unknown as number,
+                searchText: "",
+                page: pagination.current || 1,
+                pageSize: pagination.pageSize || 10,
               })
             }}
           />
