@@ -303,6 +303,7 @@ const ResourcesManagementPage: React.FC = () => {
             }}
             onChange={(pagination, filters, sorter, extra) => {
               // console.log("filters", filters)
+              setFilteredInfo(filters)
               return updateFiltersAndPagination(pagination, filters)
             }}
           />
