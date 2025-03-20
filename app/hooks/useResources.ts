@@ -4,7 +4,7 @@ import { message } from "antd"
 
 import { apiClient } from "@/app/services/instance"
 
-// Interface tanımlamaları
+// Interface definitions
 interface IResource {
   id: string
   key: string
@@ -83,7 +83,7 @@ const useResources = () => {
     queryFn: () => apiClient.get("/Environments/list"),
     select: (data: any) => data.data.data,
   })
-  console.log("environmentList", environmentList)
+
   const getResourcesMutation = useMutation({
     mutationFn: async (params: {
       environmentId: string

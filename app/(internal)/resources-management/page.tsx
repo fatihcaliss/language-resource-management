@@ -1,27 +1,15 @@
 "use client"
 
 import React, { useEffect, useMemo, useState } from "react"
-import {
-  DeleteOutlined,
-  EditOutlined,
-  PlusOutlined,
-  SearchOutlined,
-} from "@ant-design/icons"
+import { PlusOutlined, SearchOutlined } from "@ant-design/icons"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import {
-  Button,
-  Input,
-  message,
-  Popconfirm,
-  Space,
-  Table,
-  TreeSelect,
-} from "antd"
+import { Button, Input, Table, TreeSelect } from "antd"
 import type { ColumnsType } from "antd/es/table"
 
 import MainLayout from "@/app/components/mainLayout/MainLayout"
 import useResources, { IResource } from "@/app/hooks/useResources"
 import { apiClient } from "@/app/services/instance"
+import { debounce } from "@/app/utils/debounce"
 
 const ResourcesManagementPage: React.FC = () => {
   const {
@@ -43,6 +31,23 @@ const ResourcesManagementPage: React.FC = () => {
   } = useResources()
 
   const [filteredInfo, setFilteredInfo] = useState<Record<string, any>>({})
+  const [searchInputValue, setSearchInputValue] = useState<string>("")
+
+  // Create a debounced search function that only updates after delay
+  const debouncedSearch = useMemo(
+    () =>
+      debounce((value: string) => {
+        setSearchText(value)
+      }, 500),
+    [setSearchText]
+  )
+
+  // Handle search input change
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchInputValue(value)
+    debouncedSearch(value)
+  }
 
   // Derive selectedValue from selectedEnvironment and selectedApplicationType
   const selectedValue = useMemo(() => {
@@ -248,7 +253,8 @@ const ResourcesManagementPage: React.FC = () => {
   // console.log("selectedApplicationType", selectedApplicationType)
   // console.log("environmentList", environmentList)
   // console.log("tableFilters", tableFilters)
-  console.log("selectedValue", selectedValue)
+  // console.log("selectedValue", selectedValue)
+
   return (
     <>
       {contextHolder}
@@ -271,9 +277,10 @@ const ResourcesManagementPage: React.FC = () => {
                 <Input
                   placeholder="Search resources..."
                   prefix={<SearchOutlined />}
-                  value={searchText}
-                  onChange={(e) => setSearchText(e.target.value)}
+                  value={searchInputValue}
+                  onChange={handleSearchInputChange}
                   className="flex-1"
+                  allowClear
                 />
               </div>
 
@@ -288,7 +295,7 @@ const ResourcesManagementPage: React.FC = () => {
             columns={columns}
             dataSource={data}
             rowKey="id"
-            loading={isLoading}
+            loading={isLoading || isEnvironmentListLoading}
             pagination={{
               defaultCurrent: 1,
               defaultPageSize: 10,
