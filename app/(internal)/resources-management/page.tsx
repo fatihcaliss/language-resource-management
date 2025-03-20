@@ -3,7 +3,16 @@
 import React, { useEffect, useMemo, useState } from "react"
 import { PlusOutlined, SearchOutlined } from "@ant-design/icons"
 import { useMutation, useQuery } from "@tanstack/react-query"
-import { Button, Input, Table, TreeSelect } from "antd"
+import {
+  Button,
+  Form,
+  Input,
+  message,
+  Modal,
+  Select,
+  Table,
+  TreeSelect,
+} from "antd"
 import type { ColumnsType } from "antd/es/table"
 
 import MainLayout from "@/app/components/mainLayout/MainLayout"
@@ -28,10 +37,13 @@ const ResourcesManagementPage: React.FC = () => {
     selectedApplicationType,
     setSelectedApplicationType,
     requestFilters,
+    postCreateResourceMutation,
   } = useResources()
 
   const [filteredInfo, setFilteredInfo] = useState<Record<string, any>>({})
   const [searchInputValue, setSearchInputValue] = useState<string>("")
+  const [isModalVisible, setIsModalVisible] = useState(false)
+  const [form] = Form.useForm()
 
   // Create a debounced search function that only updates after delay
   const debouncedSearch = useMemo(
@@ -177,6 +189,50 @@ const ResourcesManagementPage: React.FC = () => {
     }
   }, [environmentList])
 
+  // Handle modal visibility
+  const showModal = () => {
+    setIsModalVisible(true)
+  }
+
+  const handleCancel = () => {
+    form.resetFields()
+    setIsModalVisible(false)
+  }
+
+  const handleSubmit = async () => {
+    try {
+      const values = await form.validateFields()
+
+      await postCreateResourceMutation.mutateAsync({
+        environmentId: selectedEnvironment.id,
+        applicationId: selectedApplicationType.id,
+        key: values.key,
+        value: values.value,
+        resourceType: values.resourceType,
+        cultureCode: values.langCode,
+      })
+
+      // Reset form and close modal on success
+      form.resetFields()
+      setIsModalVisible(false)
+
+      // Refresh the table data
+      updateFiltersAndPagination(
+        {
+          current: tablePagination.page,
+          pageSize: tablePagination.pageSize,
+        },
+        {
+          selectedApplicationType,
+          selectedEnvironment,
+        }
+      )
+    } catch (error) {
+      // Form validation error is handled by the form itself
+      console.error("Submission error:", error)
+    }
+  }
+
   // Define table columns
   const columns: ColumnsType<IResource> = [
     {
@@ -284,7 +340,14 @@ const ResourcesManagementPage: React.FC = () => {
                 />
               </div>
 
-              <Button type="primary" icon={<PlusOutlined />}>
+              <Button
+                type="primary"
+                icon={<PlusOutlined />}
+                onClick={showModal}
+                disabled={
+                  !selectedEnvironment.id || !selectedApplicationType.id
+                }
+              >
                 Add New Resource
               </Button>
             </div>
@@ -314,6 +377,68 @@ const ResourcesManagementPage: React.FC = () => {
               return updateFiltersAndPagination(pagination, filters)
             }}
           />
+
+          <Modal
+            title="Create New Resource"
+            open={isModalVisible}
+            onCancel={handleCancel}
+            onOk={handleSubmit}
+            confirmLoading={postCreateResourceMutation.isPending}
+          >
+            <Form form={form} layout="vertical" name="create_resource_form">
+              <Form.Item
+                name="key"
+                label="Resource Key"
+                rules={[
+                  { required: true, message: "Please enter a resource key" },
+                ]}
+              >
+                <Input placeholder="Enter resource key" />
+              </Form.Item>
+
+              <Form.Item
+                name="value"
+                label="Resource Value"
+                rules={[
+                  { required: true, message: "Please enter a resource value" },
+                ]}
+              >
+                <Input.TextArea rows={4} placeholder="Enter resource value" />
+              </Form.Item>
+
+              <Form.Item
+                name="resourceType"
+                label="Resource Type"
+                rules={[
+                  { required: true, message: "Please select a resource type" },
+                ]}
+              >
+                <Select placeholder="Select resource type">
+                  {tableFilters.resourceTypes.map((type) => (
+                    <Select.Option key={type.id} value={type.id.toString()}>
+                      {type.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+
+              <Form.Item
+                name="langCode"
+                label="Culture Code"
+                rules={[
+                  { required: true, message: "Please select a culture code" },
+                ]}
+              >
+                <Select placeholder="Select culture code">
+                  {tableFilters.languages.map((lang) => (
+                    <Select.Option key={lang.id} value={lang.id}>
+                      {lang.name}
+                    </Select.Option>
+                  ))}
+                </Select>
+              </Form.Item>
+            </Form>
+          </Modal>
         </div>
       </MainLayout>
     </>

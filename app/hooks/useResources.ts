@@ -150,12 +150,7 @@ const useResources = () => {
         })
       }
     }
-  }, [
-    isSuccess,
-    searchText,
-    // selectedEnvironment.id,
-    // selectedApplicationType.id,
-  ])
+  }, [isSuccess, searchText])
 
   const fetchResources = (pagination: any, filters: any) => {
     return getResourcesMutation.mutateAsync({
@@ -198,6 +193,28 @@ const useResources = () => {
     return fetchResources(pagination, filters)
   }
 
+  const postCreateResourceMutation = useMutation({
+    mutationFn: async (params: {
+      environmentId: string
+      applicationId: string
+      key: string
+      value: string
+      resourceType: string
+      cultureCode: string
+    }) => {
+      const { data } = (await apiClient.post("/Resources/create", params)) as {
+        data: { data: boolean }
+      }
+      return data
+    },
+    onSuccess: (data) => {
+      messageApi.success("Resource created successfully")
+    },
+    onError: (error: any) => {
+      messageApi.error(error?.error?.detail)
+    },
+  })
+
   return {
     contextHolder,
     data,
@@ -215,6 +232,7 @@ const useResources = () => {
     selectedApplicationType,
     setSelectedApplicationType,
     requestFilters,
+    postCreateResourceMutation,
   }
 }
 
