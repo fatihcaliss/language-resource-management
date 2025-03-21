@@ -62,7 +62,7 @@ export default function LoginPage() {
       <div className="flex min-h-screen items-center justify-center p-4">
         <Card className="w-full max-w-md shadow-lg">
           <div className="mb-6 text-center">
-            <Title level={2}>Language Resource Management</Title>
+            <Title level={2}>Resource Management System</Title>
             <Text type="secondary">Sign in to your account</Text>
           </div>
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import {
   LogoutOutlined,
   MenuFoldOutlined,
@@ -29,6 +29,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const pathname = usePathname()
   const router = useRouter()
   const [collapsed, setCollapsed] = useState(false)
+  const [delayedCollapsed, setDelayedCollapsed] = useState(false)
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken()
@@ -88,11 +89,44 @@ const MainLayout = ({ children }: MainLayoutProps) => {
     },
   ]
 
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      setDelayedCollapsed(collapsed)
+    }, 300)
+    return () => clearTimeout(timeout)
+  }, [collapsed])
+
   return (
     <Layout style={{ minHeight: "100vh" }}>
       <Sider trigger={null} collapsible collapsed={collapsed}>
-        <div className="demo-logo-vertical">
-          {!collapsed ? "LangResource" : "LRM"}
+        <div
+          style={{
+            height: "64px",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            color: "white",
+            fontSize: collapsed ? "18px" : "16px",
+            fontWeight: "bold",
+            margin: "0 0 16px 0",
+            overflow: "hidden",
+            transition: "all 1s cubic-bezier(0.34, 1.56, 0.64, 1)",
+            textAlign: "center",
+            width: "100%",
+            paddingLeft: collapsed ? "0px" : "10px",
+            paddingRight: collapsed ? "0px" : "10px",
+            opacity: delayedCollapsed === collapsed ? 1 : 0,
+            transform:
+              delayedCollapsed === collapsed
+                ? "translateY(0)"
+                : "translateY(-5px)",
+          }}
+        >
+          {!delayedCollapsed ? (
+            <span className="text-white">Resource Management System</span>
+          ) : (
+            <span className="text-white">RMS</span>
+          )}
         </div>
         <Menu
           theme="dark"

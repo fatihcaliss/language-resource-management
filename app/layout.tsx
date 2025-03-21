@@ -19,8 +19,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: "Language Resource Management",
-  description: "Language Resource Management",
+  title: "Resource Management System",
+  description: "Resource Management System",
 }
 
 const customTheme = {

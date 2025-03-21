@@ -196,11 +196,11 @@ const useResources = () => {
   const postCreateResourceMutation = useMutation({
     mutationFn: async (params: {
       environmentId: string
-      applicationId: string
+      applicationTypeId: string
       key: string
       value: string
       resourceType: string
-      cultureCode: string
+      langCode: string
     }) => {
       const { data } = (await apiClient.post("/Resources/create", params)) as {
         data: { data: boolean }

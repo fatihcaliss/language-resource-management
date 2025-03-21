@@ -205,11 +205,11 @@ const ResourcesManagementPage: React.FC = () => {
 
       await postCreateResourceMutation.mutateAsync({
         environmentId: selectedEnvironment.id,
-        applicationId: selectedApplicationType.id,
+        applicationTypeId: selectedApplicationType.id,
         key: values.key,
         value: values.value,
         resourceType: values.resourceType,
-        cultureCode: values.langCode,
+        langCode: values.langCode,
       })
 
       // Reset form and close modal on success
@@ -267,7 +267,7 @@ const ResourcesManagementPage: React.FC = () => {
       ellipsis: true,
     },
     {
-      title: "Culture Code",
+      title: "Language Code",
       dataIndex: "langCode",
       key: "langCode",
       sorter: (a, b) => a.langCode.localeCompare(b.langCode),
@@ -426,9 +426,9 @@ const ResourcesManagementPage: React.FC = () => {
 
               <Form.Item
                 name="langCode"
-                label="Culture Code"
+                label="Language Code"
                 rules={[
-                  { required: true, message: "Please select a culture code" },
+                  { required: true, message: "Please select a language code" },
                 ]}
               >
                 <Select placeholder="Select culture code">
