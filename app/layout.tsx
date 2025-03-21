@@ -1,10 +1,8 @@
 import type { Metadata } from "next"
 import { Geist, Geist_Mono } from "next/font/google"
-import { ConfigProvider, theme } from "antd"
+import { AntdRegistry } from "@ant-design/nextjs-registry"
 
 import "./globals.css"
-
-import { AntdRegistry } from "@ant-design/nextjs-registry"
 
 import { Providers } from "./components/providers/providers"
 
@@ -23,19 +21,6 @@ export const metadata: Metadata = {
   description: "Resource Management System",
 }
 
-const customTheme = {
-  token: {
-    colorPrimary: "#1677ff",
-    colorSuccess: "#52c41a",
-    colorWarning: "#faad14",
-    colorError: "#ff4d4f",
-    colorInfo: "#1677ff",
-    borderRadius: 6,
-    wireframe: false,
-  },
-  algorithm: theme.defaultAlgorithm,
-}
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -47,11 +32,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <Providers>
-          <AntdRegistry>
-            <ConfigProvider theme={customTheme} wave={{ disabled: true }}>
-              {children}
-            </ConfigProvider>
-          </AntdRegistry>
+          <AntdRegistry>{children}</AntdRegistry>
         </Providers>
       </body>
     </html>

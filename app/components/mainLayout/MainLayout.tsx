@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react"
 import {
+  BulbFilled,
+  BulbOutlined,
   LogoutOutlined,
   MenuFoldOutlined,
   MenuUnfoldOutlined,
@@ -13,6 +15,7 @@ import {
 import { Breadcrumb, Button, Dropdown, Layout, Menu, theme } from "antd"
 
 import { logout } from "../../services/auth"
+import { useTheme } from "../providers/theme-provider"
 
 import "./MainLayout.css"
 
@@ -31,8 +34,9 @@ const MainLayout = ({ children }: MainLayoutProps) => {
   const [collapsed, setCollapsed] = useState(false)
   const [delayedCollapsed, setDelayedCollapsed] = useState(false)
   const {
-    token: { colorBgContainer, borderRadiusLG },
+    token: { colorBgContainer, borderRadiusLG, colorPrimary },
   } = theme.useToken()
+  const { theme: currentTheme, toggleTheme } = useTheme()
 
   const handleLogout = () => {
     logout()
@@ -155,7 +159,12 @@ const MainLayout = ({ children }: MainLayoutProps) => {
         />
       </Sider>
       <Layout>
-        <Header style={{ padding: 0, background: colorBgContainer }}>
+        <Header
+          style={{
+            padding: 0,
+            background: currentTheme === "dark" ? "#001529" : "white",
+          }}
+        >
           <div
             style={{
               display: "flex",
@@ -179,7 +188,22 @@ const MainLayout = ({ children }: MainLayoutProps) => {
               <Breadcrumb items={generateBreadcrumbItems()} />
             </div>
 
-            <div style={{ marginRight: "24px" }}>
+            <div
+              style={{
+                marginRight: "24px",
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <Button
+                type="text"
+                icon={
+                  currentTheme === "dark" ? <BulbFilled /> : <BulbOutlined />
+                }
+                onClick={toggleTheme}
+                style={{ fontSize: "18px", marginRight: "12px" }}
+                title={`Switch to ${currentTheme === "dark" ? "light" : "dark"} mode`}
+              />
               <Dropdown menu={{ items: userMenuItems }} placement="bottomRight">
                 <Button
                   type="text"
@@ -190,9 +214,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
             </div>
           </div>
         </Header>
-        <div
-          style={{ padding: "8px 24px", background: colorBgContainer }}
-        ></div>
+
         <Content
           style={{
             margin: "24px 16px",
