@@ -276,7 +276,9 @@ const ResourcesManagementPage: React.FC = () => {
         value: code.id,
       })),
       filteredValue: filteredInfo.langCode || null,
-      onFilter: (value, record) => record.langCode === value,
+      onFilter: (value, record) => {
+        return record.langId === value
+      },
     },
     // {
     //   title: "Actions",
