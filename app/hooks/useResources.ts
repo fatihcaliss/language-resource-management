@@ -33,7 +33,7 @@ interface ResourceItem {
       id: number
       name: string
     }[]
-    languages: {
+    langCodes: {
       id: string
       name: string
     }[]
@@ -49,11 +49,11 @@ const useResources = () => {
       id: number
       name: string
     }[]
-    languages: {
+    langCodes: {
       id: string
       name: string
     }[]
-  }>({ resourceTypes: [], languages: [] })
+  }>({ resourceTypes: [], langCodes: [] })
   const [requestFilters, setRequestFilters] = useState<any>({})
   const [tablePagination, setTablePagination] = useState<{
     page?: number
@@ -92,7 +92,7 @@ const useResources = () => {
       searchText: string
       page: number
       pageSize: number
-      languageCodes: string[]
+      langCodes: string[]
     }) => {
       const { data } = (await apiClient.post("/Resources/list", params)) as {
         data: { data: ResourceItem }
@@ -146,7 +146,7 @@ const useResources = () => {
           searchText: searchText,
           page: tablePagination.page || 1,
           pageSize: tablePagination.pageSize || 10,
-          languageCodes: requestFilters.langCode || [],
+          langCodes: requestFilters.langCode || [],
         })
       }
     }
@@ -162,7 +162,7 @@ const useResources = () => {
       searchText: searchText,
       page: pagination.current || 1,
       pageSize: pagination.pageSize || 10,
-      languageCodes: (filters.langCode || []) as unknown as string[],
+      langCodes: (filters.langCode || []) as unknown as string[],
     })
   }
 
@@ -172,14 +172,14 @@ const useResources = () => {
         id: number
         name: string
       }[],
-      languages: (filters.languages || []) as unknown as {
+      langCodes: (filters.langCodes || []) as unknown as {
         id: string
         name: string
       }[],
     })
     setRequestFilters({
       resourceTypeIds: (filters.resourceTypes || []) as unknown as number,
-      languageCodes: (filters.langCode || []) as unknown as {
+      langCodes: (filters.langCodes || []) as unknown as {
         id: string
         name: string
       }[],

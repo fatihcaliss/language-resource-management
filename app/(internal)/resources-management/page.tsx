@@ -271,7 +271,7 @@ const ResourcesManagementPage: React.FC = () => {
       dataIndex: "langCode",
       key: "langCode",
       sorter: (a, b) => a.langCode.localeCompare(b.langCode),
-      filters: tableFilters.languages.map((code) => ({
+      filters: tableFilters.langCodes.map((code) => ({
         text: code.name,
         value: code.id,
       })),
@@ -430,7 +430,7 @@ const ResourcesManagementPage: React.FC = () => {
                 ]}
               >
                 <Select placeholder="Select culture code">
-                  {tableFilters.languages.map((lang) => (
+                  {tableFilters.langCodes.map((lang) => (
                     <Select.Option key={lang.id} value={lang.id}>
                       {lang.name}
                     </Select.Option>
