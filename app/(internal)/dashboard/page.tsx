@@ -57,7 +57,7 @@ export default function DashboardPage() {
     select: (data: any) => data.data.data,
   })
 
-  const addNewResourceMutation = useMutation({
+  const addNewEnvironmentMutation = useMutation({
     mutationFn: async (params: { name: string }) => {
       const { data } = (await apiClient.post(
         "/Environments/create",
@@ -156,7 +156,7 @@ export default function DashboardPage() {
 
   const handleSubmit = async (values: { name: string }) => {
     try {
-      await addNewResourceMutation.mutateAsync(values)
+      await addNewEnvironmentMutation.mutateAsync(values)
       messageApi.success("Environment created successfully!")
       form.resetFields()
       setIsModalOpen(false)
@@ -315,6 +315,7 @@ export default function DashboardPage() {
             onOk={() => form.submit()}
             okText="Create"
             cancelText="Cancel"
+            confirmLoading={addNewEnvironmentMutation.isPending}
           >
             <Form
               form={form}
@@ -345,6 +346,7 @@ export default function DashboardPage() {
             onOk={() => projectForm.submit()}
             okText="Create"
             cancelText="Cancel"
+            confirmLoading={addNewProjectMutation.isPending}
           >
             <Form
               form={projectForm}
