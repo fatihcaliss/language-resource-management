@@ -380,6 +380,7 @@ const ResourcesManagementPage: React.FC = () => {
             }}
           />
 
+          {/* Create New Resource Modal */}
           <Modal
             title="Create New Resource"
             open={isModalVisible}
@@ -417,7 +418,7 @@ const ResourcesManagementPage: React.FC = () => {
               >
                 <Select placeholder="Select resource type">
                   {tableFilters.resourceTypes.map((type) => (
-                    <Select.Option key={type.id} value={type.id.toString()}>
+                    <Select.Option key={type.id} value={type.id}>
                       {type.name}
                     </Select.Option>
                   ))}
