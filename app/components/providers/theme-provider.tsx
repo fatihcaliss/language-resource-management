@@ -23,15 +23,16 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
   // Initialize theme from localStorage on mount
   useEffect(() => {
     const savedTheme = localStorage.getItem("theme") as Theme
-    const prefersDark = window.matchMedia(
-      "(prefers-color-scheme: dark)"
-    ).matches
+    // const prefersDark = window.matchMedia(
+    //   "(prefers-color-scheme: dark)"
+    // ).matches
 
     if (savedTheme) {
       setTheme(savedTheme)
-    } else if (prefersDark) {
-      setTheme("dark")
     }
+    //  else if (prefersDark) {
+    //   setTheme("dark")
+    // }
 
     setMounted(true)
   }, [])
