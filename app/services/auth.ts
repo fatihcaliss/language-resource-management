@@ -97,42 +97,6 @@ export const refreshAccessToken = async (): Promise<{
   }
 }
 
-// export const login = async (
-//   username: string,
-//   password: string
-// ): Promise<{ success: boolean; message: string }> => {
-//   try {
-//     console.log("Login attempt:", { username, password })
-
-//     await new Promise((resolve) => setTimeout(resolve, 1000))
-
-//     setAuthToken("dummy-token")
-//     return { success: true, message: "Login successful!" }
-//   } catch (error) {
-//     console.error("Login error:", error)
-//     return { success: false, message: "Failed to login. Please try again." }
-//   }
-// }
-
-// export const signup = async (
-//   userData: any
-// ): Promise<{ success: boolean; message: string }> => {
-//   try {
-//     console.log("Signup attempt:", userData)
-
-//     await new Promise((resolve) => setTimeout(resolve, 1000))
-
-//     setAuthToken("dummy-token")
-//     return { success: true, message: "Account created successfully!" }
-//   } catch (error) {
-//     console.error("Signup error:", error)
-//     return {
-//       success: false,
-//       message: "Failed to create account. Please try again.",
-//     }
-//   }
-// }
-
 export const logout = (): string => {
   removeAuthToken()
   window.location.href = "/auth/login"

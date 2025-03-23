@@ -4,6 +4,9 @@ import { message } from "antd"
 
 import { apiClient } from "@/app/services/instance"
 
+import { useGetEnvironments } from "./useEnvironment"
+import { useGetLanguages } from "./useLanguage"
+
 // Interface definitions
 interface IResource {
   id: string
@@ -74,15 +77,14 @@ const useResources = () => {
     name: string
   }>({ id: "", name: "" })
 
+  const { data: languageList, isFetching: isLanguageListLoading } =
+    useGetLanguages()
+
   const {
     data: environmentList,
     isSuccess,
-    isLoading: isEnvironmentListLoading,
-  } = useQuery({
-    queryKey: ["environmentList"],
-    queryFn: () => apiClient.get("/Environments/list"),
-    select: (data: any) => data.data.data,
-  })
+    isFetching: isEnvironmentListLoading,
+  } = useGetEnvironments()
 
   const getResourcesMutation = useMutation({
     mutationFn: async (params: {
@@ -233,6 +235,8 @@ const useResources = () => {
     setSelectedApplicationType,
     requestFilters,
     postCreateResourceMutation,
+    languageList,
+    isLanguageListLoading,
   }
 }
 

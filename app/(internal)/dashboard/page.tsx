@@ -28,12 +28,17 @@ import {
 import type { TreeDataNode, TreeProps } from "antd"
 
 import MainLayout from "@/app/components/mainLayout/MainLayout"
+import { useCreateApplication } from "@/app/hooks/useApplication"
+import {
+  useCreateEnvironment,
+  useGetEnvironments,
+} from "@/app/hooks/useEnvironment"
 import { apiClient } from "@/app/services/instance"
+import { transformEnvironmentData } from "@/app/utils/transformEnvironmentTreeSelect"
 
 const { Title } = Typography
 
 export default function DashboardPage() {
-  const [username, setUsername] = useState("Admin")
   const [messageApi, contextHolder] = message.useMessage()
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [isProjectModalOpen, setIsProjectModalOpen] = useState(false)
@@ -46,102 +51,19 @@ export default function DashboardPage() {
     select: (data: any) => data.data.data,
   })
 
+  const { data: environmentList, isSuccess, isFetching } = useGetEnvironments()
+
   const {
-    data: environmentList,
-    isSuccess,
-    refetch,
-    isFetching,
-  } = useQuery({
-    queryKey: ["environmentList"],
-    queryFn: () => apiClient.get("/Environments/list"),
-    select: (data: any) => data.data.data,
-  })
+    createEnvironment,
+    isPending: isCreatingEnvironment,
+    isSuccess: isEnvironmentCreated,
+  } = useCreateEnvironment()
 
-  const addNewEnvironmentMutation = useMutation({
-    mutationFn: async (params: { name: string }) => {
-      const { data } = (await apiClient.post(
-        "/Environments/create",
-        params
-      )) as {
-        data: { data: boolean }
-      }
-      return data
-    },
-    onSuccess: (data) => {
-      console.log("data", data)
-      refetch()
-    },
-    onError: (error: any) => {
-      messageApi.error(error?.error?.detail)
-    },
-  })
-
-  const addNewProjectMutation = useMutation({
-    mutationFn: async (params: { name: string; environmentId: string }) => {
-      const { data } = (await apiClient.post(
-        "/ApplicationTypes/create",
-        params
-      )) as {
-        data: { data: boolean }
-      }
-      return data
-    },
-    onSuccess: (data) => {
-      console.log("data", data)
-      refetch()
-    },
-    onError: (error: any) => {
-      messageApi.error(error?.error?.detail)
-    },
-  })
-  // Transform environment data for tree component
-  const transformEnvironmentData = (data: any[]): TreeDataNode[] => {
-    return data?.map((env, envIndex) => ({
-      title: env.name,
-      key: `${envIndex}`,
-      value: env.id,
-      children: env.applicationTypes.map((app: any, appIndex: number) => ({
-        title: app.name,
-        key: `${envIndex}-${appIndex}`,
-        value: app.id,
-      })),
-    }))
-  }
-  console.log("environmentList", environmentList)
-
-  const mockData = [
-    {
-      name: "dev",
-      applicationTypes: [
-        {
-          name: "Finance",
-        },
-        {
-          name: "Payment",
-        },
-        {
-          name: "Ticket Management",
-        },
-        {
-          name: "Key Management",
-        },
-      ],
-    },
-    {
-      name: "prod",
-      applicationTypes: [
-        {
-          name: "E-Commerce",
-        },
-        {
-          name: "Analytics",
-        },
-        {
-          name: "User Management",
-        },
-      ],
-    },
-  ]
+  const {
+    createProject,
+    isPending: isCreatingProject,
+    isSuccess: isProjectCreated,
+  } = useCreateApplication()
 
   const treeData = isSuccess ? transformEnvironmentData(environmentList) : []
 
@@ -156,12 +78,14 @@ export default function DashboardPage() {
 
   const handleSubmit = async (values: { name: string }) => {
     try {
-      await addNewEnvironmentMutation.mutateAsync(values)
-      messageApi.success("Environment created successfully!")
+      await createEnvironment(values)
+      isEnvironmentCreated &&
+        messageApi.success("Environment created successfully!")
       form.resetFields()
       setIsModalOpen(false)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating environment:", error)
+      messageApi.error(error?.error?.detail || error?.title)
     }
   }
 
@@ -180,12 +104,13 @@ export default function DashboardPage() {
     environmentId: string
   }) => {
     try {
-      await addNewProjectMutation.mutateAsync(values)
-      messageApi.success("Project created successfully!")
+      await createProject(values)
+      isProjectCreated && messageApi.success("Project created successfully!")
       projectForm.resetFields()
       setIsProjectModalOpen(false)
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error creating project:", error)
+      messageApi.error(error?.error?.detail || error?.title)
     }
   }
 
@@ -315,7 +240,7 @@ export default function DashboardPage() {
             onOk={() => form.submit()}
             okText="Create"
             cancelText="Cancel"
-            confirmLoading={addNewEnvironmentMutation.isPending}
+            confirmLoading={isCreatingEnvironment}
           >
             <Form
               form={form}
@@ -346,7 +271,7 @@ export default function DashboardPage() {
             onOk={() => projectForm.submit()}
             okText="Create"
             cancelText="Cancel"
-            confirmLoading={addNewProjectMutation.isPending}
+            confirmLoading={isCreatingProject}
           >
             <Form
               form={projectForm}

@@ -2,29 +2,23 @@
 
 import React, { useEffect, useMemo, useState } from "react"
 import { PlusOutlined, SearchOutlined } from "@ant-design/icons"
-import { useMutation, useQuery } from "@tanstack/react-query"
-import {
-  Button,
-  Form,
-  Input,
-  message,
-  Modal,
-  Select,
-  Table,
-  TreeSelect,
-} from "antd"
+import { Button, Form, Input, Modal, Select, Table, TreeSelect } from "antd"
 import type { ColumnsType } from "antd/es/table"
 
 import MainLayout from "@/app/components/mainLayout/MainLayout"
 import useResources, { IResource } from "@/app/hooks/useResources"
-import { apiClient } from "@/app/services/instance"
+import {
+  useCreateResourceType,
+  useDeleteResourceType,
+  useGetResourceTypes,
+  useUpdateResourceType,
+} from "@/app/hooks/useResourceTypes"
 import { debounce } from "@/app/utils/debounce"
 
 const ResourcesManagementPage: React.FC = () => {
   const {
     contextHolder,
     data,
-    searchText,
     setSearchText,
     tableFilters,
     tablePagination,
@@ -36,14 +30,26 @@ const ResourcesManagementPage: React.FC = () => {
     isEnvironmentListLoading,
     selectedApplicationType,
     setSelectedApplicationType,
-    requestFilters,
     postCreateResourceMutation,
+    languageList,
+    isLanguageListLoading,
   } = useResources()
 
   const [filteredInfo, setFilteredInfo] = useState<Record<string, any>>({})
   const [searchInputValue, setSearchInputValue] = useState<string>("")
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [form] = Form.useForm()
+
+  const { createResourceType, isLoading: isCreateResourceTypeLoading } =
+    useCreateResourceType()
+  const { updateResourceType, isLoading: isUpdateResourceTypeLoading } =
+    useUpdateResourceType()
+  const { deleteResourceType, isLoading: isDeleteResourceTypeLoading } =
+    useDeleteResourceType()
+  const { data: resourceTypeList, isLoading: isGetResourceTypeLoading } =
+    useGetResourceTypes()
+
+  console.log("resourceTypeList", resourceTypeList)
 
   // Create a debounced search function that only updates after delay
   const debouncedSearch = useMemo(
@@ -63,7 +69,11 @@ const ResourcesManagementPage: React.FC = () => {
 
   // Derive selectedValue from selectedEnvironment and selectedApplicationType
   const selectedValue = useMemo(() => {
-    if (selectedEnvironment?.id && selectedApplicationType?.id) {
+    if (
+      selectedEnvironment?.id &&
+      selectedApplicationType?.id &&
+      selectedEnvironment.applicationTypes?.length
+    ) {
       return `${selectedEnvironment.id}|${selectedApplicationType.id}`
     }
     return undefined
@@ -95,7 +105,7 @@ const ResourcesManagementPage: React.FC = () => {
       const [environmentId, applicationTypeId] = value.split("|")
 
       // Find the selected environment
-      const environment = environmentList.find(
+      const environment = environmentList?.find(
         (env: any) => env.id === environmentId
       )
 
@@ -416,8 +426,22 @@ const ResourcesManagementPage: React.FC = () => {
                   { required: true, message: "Please select a resource type" },
                 ]}
               >
-                <Select placeholder="Select resource type">
-                  {tableFilters.resourceTypes.map((type) => (
+                <Select
+                  placeholder="Select resource type"
+                  loading={isGetResourceTypeLoading}
+                  allowClear
+                  showSearch
+                  options={resourceTypeList?.map((type) => ({
+                    label: type.name,
+                    value: type.id,
+                  }))}
+                  filterOption={(input, option) =>
+                    (option?.label ?? "")
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
+                >
+                  {resourceTypeList?.map((type) => (
                     <Select.Option key={type.id} value={type.id}>
                       {type.name}
                     </Select.Option>
@@ -432,8 +456,22 @@ const ResourcesManagementPage: React.FC = () => {
                   { required: true, message: "Please select a language code" },
                 ]}
               >
-                <Select placeholder="Select culture code">
-                  {tableFilters.langCodes.map((lang) => (
+                <Select
+                  placeholder="Select culture code"
+                  loading={isLanguageListLoading}
+                  allowClear
+                  showSearch
+                  options={languageList?.map((lang) => ({
+                    label: lang.name,
+                    value: lang.id,
+                  }))}
+                  filterOption={(input, option) =>
+                    (option?.label ?? "")
+                      .toLowerCase()
+                      .includes(input.toLowerCase())
+                  }
+                >
+                  {languageList?.map((lang) => (
                     <Select.Option key={lang.id} value={lang.id}>
                       {lang.name}
                     </Select.Option>
