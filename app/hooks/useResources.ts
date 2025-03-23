@@ -16,10 +16,8 @@ interface IResource {
   langCode: string
   applicationTypeId: string
   applicationType: string
-  resourceType: {
-    id: number
-    name: string
-  }
+  resourceType: string
+  resourceTypeId: string
   environmentId: string
 }
 
@@ -201,7 +199,7 @@ const useResources = () => {
       applicationTypeId: string
       key: string
       value: string
-      resourceType: string
+      resourceTypeId: string
       langCode: string
     }) => {
       const { data } = (await apiClient.post("/Resources/create", params)) as {
@@ -219,6 +217,7 @@ const useResources = () => {
 
   return {
     contextHolder,
+    messageApi,
     data,
     searchText,
     setSearchText,

@@ -65,7 +65,7 @@ export const resourceTypesService = {
     params: DeleteResourceTypeParams
   ): Promise<boolean> => {
     const { data } = await apiClient.delete<ApiResponse<boolean>>(
-      `/ResourceTypes/delete/${params.id}`
+      `/ResourceTypes/delete?Id=${params.id}`
     )
     return data.data
   },

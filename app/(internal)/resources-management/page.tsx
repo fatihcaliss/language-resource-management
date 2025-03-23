@@ -1,9 +1,23 @@
 "use client"
 
 import React, { useEffect, useMemo, useState } from "react"
-import { PlusOutlined, SearchOutlined } from "@ant-design/icons"
-import { Button, Form, Input, Modal, Select, Table, TreeSelect } from "antd"
+import {
+  PlusOutlined,
+  SearchOutlined,
+  SettingOutlined,
+} from "@ant-design/icons"
+import {
+  Button,
+  Divider,
+  Form,
+  Input,
+  Modal,
+  Select,
+  Table,
+  TreeSelect,
+} from "antd"
 import type { ColumnsType } from "antd/es/table"
+import Title from "antd/es/typography/Title"
 
 import MainLayout from "@/app/components/mainLayout/MainLayout"
 import useResources, { IResource } from "@/app/hooks/useResources"
@@ -33,23 +47,29 @@ const ResourcesManagementPage: React.FC = () => {
     postCreateResourceMutation,
     languageList,
     isLanguageListLoading,
+    messageApi,
   } = useResources()
 
   const [filteredInfo, setFilteredInfo] = useState<Record<string, any>>({})
   const [searchInputValue, setSearchInputValue] = useState<string>("")
   const [isModalVisible, setIsModalVisible] = useState(false)
+  const [isResourceTypeModalVisible, setIsResourceTypeModalVisible] =
+    useState(false)
+  const [resourceTypeForm] = Form.useForm()
+  const [editingResourceType, setEditingResourceType] = useState<{
+    id: string
+    name: string
+  } | null>(null)
   const [form] = Form.useForm()
 
-  const { createResourceType, isLoading: isCreateResourceTypeLoading } =
+  const { createResourceType, isPending: isCreateResourceTypeLoading } =
     useCreateResourceType()
-  const { updateResourceType, isLoading: isUpdateResourceTypeLoading } =
+  const { updateResourceType, isPending: isUpdateResourceTypeLoading } =
     useUpdateResourceType()
-  const { deleteResourceType, isLoading: isDeleteResourceTypeLoading } =
+  const { deleteResourceType, isPending: isDeleteResourceTypeLoading } =
     useDeleteResourceType()
   const { data: resourceTypeList, isLoading: isGetResourceTypeLoading } =
     useGetResourceTypes()
-
-  console.log("resourceTypeList", resourceTypeList)
 
   // Create a debounced search function that only updates after delay
   const debouncedSearch = useMemo(
@@ -218,7 +238,7 @@ const ResourcesManagementPage: React.FC = () => {
         applicationTypeId: selectedApplicationType.id,
         key: values.key,
         value: values.value,
-        resourceType: values.resourceType,
+        resourceTypeId: values.resourceType,
         langCode: values.langCode,
       })
 
@@ -243,6 +263,61 @@ const ResourcesManagementPage: React.FC = () => {
     }
   }
 
+  // Handle resource type modal visibility
+  const showResourceTypeModal = () => {
+    setIsResourceTypeModalVisible(true)
+  }
+
+  const handleResourceTypeCancel = () => {
+    resourceTypeForm.resetFields()
+    setEditingResourceType(null)
+    setIsResourceTypeModalVisible(false)
+  }
+
+  const handleResourceTypeSubmit = async () => {
+    try {
+      const values = await resourceTypeForm.validateFields()
+
+      if (editingResourceType) {
+        // Update existing resource type
+        await updateResourceType({
+          id: editingResourceType.id,
+          name: values.typeName,
+        })
+        messageApi.success("Resource type updated successfully!")
+      } else {
+        // Create new resource type
+        await createResourceType({
+          name: values.typeName,
+        })
+        messageApi.success("Resource type created successfully!")
+      }
+
+      // Reset form and state
+      resourceTypeForm.resetFields()
+      setEditingResourceType(null)
+      setIsResourceTypeModalVisible(false)
+    } catch (error) {
+      console.error("Resource type submission error:", error)
+      messageApi.error("Failed to create resource type")
+    }
+  }
+
+  const handleEditResourceType = (record: { id: string; name: string }) => {
+    setEditingResourceType(record)
+    resourceTypeForm.setFieldsValue({ typeName: record.name })
+  }
+
+  const handleDeleteResourceType = async (id: string) => {
+    try {
+      await deleteResourceType({ id })
+      messageApi.success("Resource type deleted successfully!")
+    } catch (error) {
+      console.error("Delete resource type error:", error)
+      messageApi.error("Failed to delete resource type")
+    }
+  }
+
   // Define table columns
   const columns: ColumnsType<IResource> = [
     {
@@ -260,9 +335,9 @@ const ResourcesManagementPage: React.FC = () => {
         value: type.id,
       })),
       filteredValue: filteredInfo.resourceType || null,
-      onFilter: (value, record) => record.resourceType.id === value,
-      sorter: (a, b) => a.resourceType.name.localeCompare(b.resourceType.name),
-      render: (_, record) => record.resourceType.name,
+      // onFilter: (value, record) => record.resourceType === value,
+      sorter: (a, b) => a.resourceType.localeCompare(b.resourceType),
+      render: (_, record) => record.resourceType,
     },
     {
       title: "Key Value",
@@ -331,7 +406,9 @@ const ResourcesManagementPage: React.FC = () => {
           <div className="mb-6">
             <h1 className="text-2xl font-bold mb-4">Resources Management</h1>
             <div className="flex justify-between mb-4">
-              <div className="flex gap-4 w-1/2">
+              <div className="flex gap-2 w-1/2">
+                <Button type="default" icon={<SettingOutlined />} />
+
                 <TreeSelect
                   placeholder="Select Environment"
                   className="flex-1"
@@ -418,36 +495,52 @@ const ResourcesManagementPage: React.FC = () => {
               >
                 <Input.TextArea rows={4} placeholder="Enter resource value" />
               </Form.Item>
-
-              <Form.Item
-                name="resourceType"
-                label="Resource Type"
-                rules={[
-                  { required: true, message: "Please select a resource type" },
-                ]}
-              >
-                <Select
-                  placeholder="Select resource type"
-                  loading={isGetResourceTypeLoading}
-                  allowClear
-                  showSearch
-                  options={resourceTypeList?.map((type) => ({
-                    label: type.name,
-                    value: type.id,
-                  }))}
-                  filterOption={(input, option) =>
-                    (option?.label ?? "")
-                      .toLowerCase()
-                      .includes(input.toLowerCase())
-                  }
+              <div className="flex flex-row items-end gap-2 mb-6 justify-between">
+                <Form.Item
+                  name="resourceType"
+                  label="Resource Type"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please select a resource type",
+                    },
+                  ]}
+                  className="!mb-0 flex-2/3"
                 >
-                  {resourceTypeList?.map((type) => (
-                    <Select.Option key={type.id} value={type.id}>
-                      {type.name}
-                    </Select.Option>
-                  ))}
-                </Select>
-              </Form.Item>
+                  <Select
+                    placeholder="Select resource type"
+                    loading={isGetResourceTypeLoading}
+                    allowClear
+                    showSearch
+                    options={resourceTypeList?.map((type) => ({
+                      label: type.name,
+                      value: type.id,
+                    }))}
+                    filterOption={(input, option) =>
+                      (option?.label ?? "")
+                        .toLowerCase()
+                        .includes(input.toLowerCase())
+                    }
+                    onChange={(value) => {
+                      console.log("value", value)
+                    }}
+                  >
+                    {resourceTypeList?.map((type) => (
+                      <Select.Option key={type.id} value={type.id}>
+                        {type.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+                <Button
+                  type="default"
+                  icon={<PlusOutlined />}
+                  onClick={showResourceTypeModal}
+                  className="flex-1/3"
+                >
+                  Manage Resource Types
+                </Button>
+              </div>
 
               <Form.Item
                 name="langCode"
@@ -479,6 +572,106 @@ const ResourcesManagementPage: React.FC = () => {
                 </Select>
               </Form.Item>
             </Form>
+          </Modal>
+
+          {/* Resource Types Management Modal */}
+          <Modal
+            title="Manage Resource Types"
+            open={isResourceTypeModalVisible}
+            onCancel={handleResourceTypeCancel}
+            footer={[
+              <Button key="cancel" onClick={handleResourceTypeCancel}>
+                Close
+              </Button>,
+            ]}
+            width={600}
+          >
+            <div className="mb-4 flex w-full">
+              <Form
+                form={resourceTypeForm}
+                layout="inline"
+                onFinish={handleResourceTypeSubmit}
+                className="w-full"
+              >
+                <Form.Item
+                  name="typeName"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please enter resource type name",
+                    },
+                  ]}
+                  className="flex-1 mr-2 min-w-[212px]"
+                >
+                  <Input placeholder="Enter resource type name" />
+                </Form.Item>
+                <Button
+                  type="primary"
+                  htmlType="submit"
+                  loading={
+                    isCreateResourceTypeLoading || isUpdateResourceTypeLoading
+                  }
+                  className="flex"
+                >
+                  {editingResourceType ? "Update" : "Add"} Resource Type
+                </Button>
+                {editingResourceType && (
+                  <Button
+                    className="ml-2"
+                    onClick={() => {
+                      resourceTypeForm.resetFields()
+                      setEditingResourceType(null)
+                    }}
+                  >
+                    Cancel Edit
+                  </Button>
+                )}
+              </Form>
+            </div>
+            <Divider />
+            <div className="mt-4">
+              <Title level={5}>Existing Resource Types</Title>
+              <div className="max-h-60 overflow-y-auto">
+                <Table
+                  dataSource={resourceTypeList}
+                  rowKey="id"
+                  loading={isGetResourceTypeLoading}
+                  pagination={false}
+                  size="small"
+                  columns={[
+                    {
+                      title: "Name",
+                      dataIndex: "name",
+                      key: "name",
+                    },
+                    {
+                      title: "Actions",
+                      key: "actions",
+                      width: 150,
+                      render: (_, record) => (
+                        <div className="flex gap-2">
+                          <Button
+                            size="small"
+                            type="primary"
+                            onClick={() => handleEditResourceType(record)}
+                          >
+                            Edit
+                          </Button>
+                          <Button
+                            size="small"
+                            danger
+                            loading={isDeleteResourceTypeLoading}
+                            onClick={() => handleDeleteResourceType(record.id)}
+                          >
+                            Delete
+                          </Button>
+                        </div>
+                      ),
+                    },
+                  ]}
+                />
+              </div>
+            </div>
           </Modal>
         </div>
       </MainLayout>
