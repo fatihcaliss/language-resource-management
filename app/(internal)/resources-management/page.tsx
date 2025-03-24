@@ -19,6 +19,7 @@ import {
 import type { ColumnsType } from "antd/es/table"
 import Title from "antd/es/typography/Title"
 
+import EnvironmentSettingsModal from "@/app/components/environmentApplicationManageModal/EnvironmentAppSettingsModal"
 import MainLayout from "@/app/components/mainLayout/MainLayout"
 import useResources, { IResource } from "@/app/hooks/useResources"
 import {
@@ -55,6 +56,7 @@ const ResourcesManagementPage: React.FC = () => {
   const [isModalVisible, setIsModalVisible] = useState(false)
   const [isResourceTypeModalVisible, setIsResourceTypeModalVisible] =
     useState(false)
+  const [isSettingsModalVisible, setIsSettingsModalVisible] = useState(false)
   const [resourceTypeForm] = Form.useForm()
   const [editingResourceType, setEditingResourceType] = useState<{
     id: string
@@ -407,7 +409,11 @@ const ResourcesManagementPage: React.FC = () => {
             <h1 className="text-2xl font-bold mb-4">Resources Management</h1>
             <div className="flex justify-between mb-4">
               <div className="flex gap-2 w-1/2">
-                <Button type="default" icon={<SettingOutlined />} />
+                <Button
+                  type="default"
+                  icon={<SettingOutlined />}
+                  onClick={() => setIsSettingsModalVisible(true)}
+                />
 
                 <TreeSelect
                   placeholder="Select Environment"
@@ -670,6 +676,12 @@ const ResourcesManagementPage: React.FC = () => {
               </div>
             </div>
           </Modal>
+
+          <EnvironmentSettingsModal
+            isOpen={isSettingsModalVisible}
+            onClose={() => setIsSettingsModalVisible(false)}
+            environmentList={environmentList}
+          />
         </div>
       </MainLayout>
     </>
