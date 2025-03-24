@@ -3,7 +3,12 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import { LockOutlined, MailOutlined, UserOutlined } from "@ant-design/icons"
+import {
+  LockOutlined,
+  MailOutlined,
+  TeamOutlined,
+  UserOutlined,
+} from "@ant-design/icons"
 import { useMutation } from "@tanstack/react-query"
 import {
   Button,
@@ -30,7 +35,8 @@ export default function SignupPage() {
     mutationFn: async (params: {
       email: string
       password: string
-      fullname: string
+      userName: string
+      companyName: string
     }) => {
       const { data } = await apiClient.post("/auth/register", params)
       return data
@@ -48,7 +54,8 @@ export default function SignupPage() {
       const params = {
         email: values.email,
         password: values.password,
-        fullname: values.username,
+        userName: values.username,
+        companyName: values.company,
       }
       await signupMutation.mutateAsync(params)
     } catch (error) {
@@ -96,6 +103,19 @@ export default function SignupPage() {
               <Input
                 prefix={<UserOutlined className="text-gray-400" />}
                 placeholder="Username"
+              />
+            </Form.Item>
+
+            <Form.Item
+              name="company"
+              rules={[
+                { required: true, message: "Please input your company!" },
+                { min: 3, message: "Company must be at least 3 characters" },
+              ]}
+            >
+              <Input
+                prefix={<TeamOutlined className="text-gray-400" />}
+                placeholder="Company"
               />
             </Form.Item>
 

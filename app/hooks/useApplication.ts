@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 import { applicationService } from "../services/applicationService"
+import { ENVIRONMENT_KEYS } from "./useEnvironment"
 
 // Keys for query caching
 export const APPLICATION_KEYS = {
@@ -18,7 +19,7 @@ export const useCreateApplication = () => {
     mutationFn: applicationService.createProject,
     onSuccess: () => {
       return queryClient.invalidateQueries({
-        queryKey: APPLICATION_KEYS.lists(),
+        queryKey: ENVIRONMENT_KEYS.lists(),
       })
     },
     onError: (error: any) => {

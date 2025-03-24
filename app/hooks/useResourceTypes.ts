@@ -1,13 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { message } from "antd"
 
-import {
-  DeleteResourceTypeParams,
-  PostCreateResourceTypeParams,
-  PutUpdateResourceTypeParams,
-  ResourceType,
-  resourceTypesService,
-} from "../services/resourceTypesService"
+import { resourceTypesService } from "../services/resourceTypesService"
+import { ENVIRONMENT_KEYS } from "./useEnvironment"
 
 // Keys for query caching
 export const RESOURCE_TYPE_KEYS = {
@@ -65,6 +59,9 @@ export const useUpdateResourceType = (options = {}) => {
         }),
         queryClient.invalidateQueries({
           queryKey: RESOURCE_TYPE_KEYS.detail(variables.id),
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ENVIRONMENT_KEYS.lists(),
         }),
       ])
     },
