@@ -521,9 +521,6 @@ const ResourcesManagementPage: React.FC = () => {
                         .toLowerCase()
                         .includes(input.toLowerCase())
                     }
-                    onChange={(value) => {
-                      console.log("value", value)
-                    }}
                   >
                     {resourceTypeList?.map((type) => (
                       <Select.Option key={type.id} value={type.id}>

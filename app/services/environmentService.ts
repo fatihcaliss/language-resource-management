@@ -16,6 +16,15 @@ export interface CreateEnvironmentParams {
   name: string
 }
 
+export interface UpdateEnvironmentParams {
+  id: string
+  name: string
+}
+
+export interface DeleteEnvironmentParams {
+  id: string
+}
+
 interface ApiResponse<T> {
   data: T
 }
@@ -30,12 +39,33 @@ export const environmentService = {
   },
 
   // Create a new environment
-  createEnvironment: async (
+  postCreateEnvironment: async (
     params: CreateEnvironmentParams
   ): Promise<boolean> => {
     const { data } = await apiClient.post<ApiResponse<boolean>>(
       "/Environments/create",
       params
+    )
+    return data.data
+  },
+
+  // Update an environment
+  putUpdateEnvironment: async (
+    params: UpdateEnvironmentParams
+  ): Promise<boolean> => {
+    const { data } = await apiClient.put<ApiResponse<boolean>>(
+      "/Environments/update",
+      params
+    )
+    return data.data
+  },
+
+  // Delete an environment
+  deleteEnvironment: async (
+    params: DeleteEnvironmentParams
+  ): Promise<boolean> => {
+    const { data } = await apiClient.delete<ApiResponse<boolean>>(
+      `/Environments/delete?Id=${params.id}`
     )
     return data.data
   },
