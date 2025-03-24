@@ -35,7 +35,7 @@ export const useCreateEnvironment = () => {
   })
 
   return {
-    postCreateEnvironment: mutation.mutateAsync,
+    createEnvironment: mutation.mutateAsync,
     isPending: mutation.isPending,
     error: mutation.error,
     isSuccess: mutation.isSuccess,
