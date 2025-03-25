@@ -1,4 +1,4 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 
 import { applicationService } from "../services/applicationService"
 import { ENVIRONMENT_KEYS } from "./useEnvironment"
@@ -12,13 +12,23 @@ export const APPLICATION_KEYS = {
   detail: (id: string) => [...APPLICATION_KEYS.details(), id] as const,
 }
 
+export const useGetApplications = () => {
+  return useQuery({
+    queryKey: APPLICATION_KEYS.lists(),
+    queryFn: applicationService.getProjects,
+  })
+}
+
 export const useCreateApplication = () => {
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
     mutationFn: applicationService.createProject,
     onSuccess: () => {
-      return queryClient.invalidateQueries({
+      queryClient.invalidateQueries({
+        queryKey: APPLICATION_KEYS.lists(),
+      })
+      queryClient.invalidateQueries({
         queryKey: ENVIRONMENT_KEYS.lists(),
       })
     },
@@ -28,9 +38,57 @@ export const useCreateApplication = () => {
   })
 
   return {
-    createProject: mutation.mutateAsync,
+    createApplication: mutation.mutateAsync,
     isPending: mutation.isPending,
     error: mutation.error,
     isSuccess: mutation.isSuccess,
+  }
+}
+
+// Hook to update a application type
+export const useUpdateApplication = (options = {}) => {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: applicationService.putUpdateProject,
+    onSuccess: () => {
+      return queryClient.invalidateQueries({
+        queryKey: APPLICATION_KEYS.lists(),
+      })
+    },
+    onError: (error: any) => {
+      console.log("useUpdateApplication error::", error)
+    },
+    ...options,
+  })
+
+  return {
+    updateApplication: mutation.mutateAsync,
+    isPending: mutation.isPending,
+    error: mutation.error,
+  }
+}
+
+// Hook to delete a application type
+export const useDeleteApplication = (options = {}) => {
+  const queryClient = useQueryClient()
+
+  const mutation = useMutation({
+    mutationFn: applicationService.deleteProject,
+    onSuccess: () => {
+      return queryClient.invalidateQueries({
+        queryKey: APPLICATION_KEYS.lists(),
+      })
+    },
+    onError: (error: any) => {
+      console.log("useDeleteApplication error::", error)
+    },
+    ...options,
+  })
+
+  return {
+    deleteApplication: mutation.mutateAsync,
+    isPending: mutation.isPending,
+    error: mutation.error,
   }
 }

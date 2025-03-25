@@ -681,6 +681,7 @@ const ResourcesManagementPage: React.FC = () => {
             isOpen={isSettingsModalVisible}
             onClose={() => setIsSettingsModalVisible(false)}
             environmentList={environmentList}
+            // applicationList={applicationList}
           />
         </div>
       </MainLayout>

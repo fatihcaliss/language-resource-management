@@ -1,4 +1,5 @@
 import { ApiResponse } from "./baseService"
+import { ApplicationType } from "./environmentService"
 import { apiClient } from "./instance"
 
 // Types
@@ -18,6 +19,14 @@ export interface DeleteProjectParams {
 
 // API functions
 export const applicationService = {
+  // Get all projects (application types)
+  getProjects: async (): Promise<ApplicationType[]> => {
+    const { data } = await apiClient.get<ApiResponse<ApplicationType[]>>(
+      "/ApplicationTypes/list"
+    )
+    return data.data
+  },
+
   // Create a new project (application type)
   createProject: async (params: CreateProjectParams): Promise<boolean> => {
     const { data } = await apiClient.post<ApiResponse<boolean>>(

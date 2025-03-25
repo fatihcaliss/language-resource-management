@@ -9,9 +9,21 @@ import {
   message,
   Modal,
   Segmented,
+  Select,
   Table,
 } from "antd"
 
+import {
+  useCreateApplication,
+  useDeleteApplication,
+  useGetApplications,
+  useUpdateApplication,
+} from "@/app/hooks/useApplication"
+import {
+  useCreateEnvironment,
+  useDeleteEnvironment,
+  useUpdateEnvironment,
+} from "@/app/hooks/useEnvironment"
 import { applicationService } from "@/app/services/applicationService"
 import {
   Environment,
@@ -39,7 +51,7 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
   isOpen,
   onClose,
   environmentList,
-  applicationList,
+  // applicationList,
 }) => {
   const [activeTab, setActiveTab] = useState<string | number>("Environments")
   const [environmentForm] = Form.useForm()
@@ -51,92 +63,56 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
   const queryClient = useQueryClient()
   const [messageApi, contextHolder] = message.useMessage()
 
+  const { data: applicationList } = useGetApplications()
+
   // Mutations for Environments
-  const createEnvironmentMutation = useMutation({
-    mutationFn: environmentService.postCreateEnvironment,
-    onSuccess: () => {
-      messageApi.success("Environment created successfully")
-      environmentForm.resetFields()
-      queryClient.invalidateQueries({ queryKey: ["environments"] })
-    },
-    onError: () => messageApi.error("Failed to create environment"),
-  })
-
-  const updateEnvironmentMutation = useMutation({
-    mutationFn: environmentService.putUpdateEnvironment,
-    onSuccess: () => {
-      messageApi.success("Environment updated successfully")
-      environmentForm.resetFields()
-      setEditingEnvironment(null)
-      queryClient.invalidateQueries({ queryKey: ["environments"] })
-    },
-    onError: () => messageApi.error("Failed to update environment"),
-  })
-
-  const deleteEnvironmentMutation = useMutation({
-    mutationFn: environmentService.deleteEnvironment,
-    onSuccess: () => {
-      messageApi.success("Environment deleted successfully")
-      queryClient.invalidateQueries({ queryKey: ["environments"] })
-    },
-    onError: () => messageApi.error("Failed to delete environment"),
-  })
-
-  // Mutations for Applications
-  const createApplicationMutation = useMutation({
-    mutationFn: applicationService.createProject,
-    onSuccess: () => {
-      messageApi.success("Application created successfully")
-      applicationForm.resetFields()
-      queryClient.invalidateQueries({ queryKey: ["environments"] })
-    },
-    onError: () => messageApi.error("Failed to create application"),
-  })
-
-  const updateApplicationMutation = useMutation({
-    mutationFn: applicationService.putUpdateProject,
-    onSuccess: () => {
-      messageApi.success("Application updated successfully")
-      applicationForm.resetFields()
-      setEditingApplication(null)
-      queryClient.invalidateQueries({ queryKey: ["environments"] })
-    },
-    onError: () => messageApi.error("Failed to update application"),
-  })
-
-  const deleteApplicationMutation = useMutation({
-    mutationFn: applicationService.deleteProject,
-    onSuccess: () => {
-      messageApi.success("Application deleted successfully")
-      queryClient.invalidateQueries({ queryKey: ["environments"] })
-    },
-    onError: () => messageApi.error("Failed to delete application"),
-  })
+  const { createEnvironment, isPending: isCreateEnvironmentPending } =
+    useCreateEnvironment()
+  const { updateEnvironment, isPending: isUpdateEnvironmentPending } =
+    useUpdateEnvironment()
+  const { deleteEnvironment, isPending: isDeleteEnvironmentPending } =
+    useDeleteEnvironment()
+  const { createApplication, isPending: isCreateApplicationPending } =
+    useCreateApplication()
+  const { updateApplication, isPending: isUpdateApplicationPending } =
+    useUpdateApplication()
+  const { deleteApplication, isPending: isDeleteApplicationPending } =
+    useDeleteApplication()
 
   const handleEnvironmentSubmit = async (values: { name: string }) => {
     if (editingEnvironment) {
-      await updateEnvironmentMutation.mutateAsync({
+      await updateEnvironment({
         id: editingEnvironment.id,
         name: values.name,
       })
+      messageApi.success("Environment updated successfully")
+      environmentForm.resetFields()
+      setEditingEnvironment(null)
     } else {
-      await createEnvironmentMutation.mutateAsync({
+      await createEnvironment({
         name: values.name,
       })
+      messageApi.success("Environment created successfully")
+      environmentForm.resetFields()
     }
   }
 
   const handleApplicationSubmit = async (values: { name: string }) => {
     if (editingApplication) {
-      await updateApplicationMutation.mutateAsync({
+      await updateApplication({
         id: editingApplication.id,
         name: values.name,
       })
+      messageApi.success("Application updated successfully")
+      applicationForm.resetFields()
+      setEditingApplication(null)
     } else if (environmentList) {
-      await createApplicationMutation.mutateAsync({
+      await createApplication({
         name: values.name,
         environmentId: environmentList[0].id,
       })
+      messageApi.success("Application created successfully")
+      applicationForm.resetFields()
     }
   }
 
@@ -164,7 +140,8 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
           <Button
             size="small"
             danger
-            onClick={() => deleteEnvironmentMutation.mutate({ id: record.id })}
+            loading={isDeleteEnvironmentPending}
+            onClick={() => deleteEnvironment({ id: record.id })}
           >
             Delete
           </Button>
@@ -197,7 +174,8 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
           <Button
             size="small"
             danger
-            onClick={() => deleteApplicationMutation.mutate({ id: record.id })}
+            loading={isDeleteApplicationPending}
+            onClick={() => deleteApplication({ id: record.id })}
           >
             Delete
           </Button>
@@ -242,9 +220,10 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
           <div className="mt-4 max-h-full overflow-auto">
             <Form
               form={environmentForm}
-              layout="inline"
               onFinish={handleEnvironmentSubmit}
               className="my-4"
+              labelCol={{ span: 12 }}
+              wrapperCol={{ span: 12 }}
             >
               <Form.Item
                 name="name"
@@ -260,8 +239,7 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
                 htmlType="submit"
                 icon={<PlusOutlined />}
                 loading={
-                  createEnvironmentMutation.isPending ||
-                  updateEnvironmentMutation.isPending
+                  isCreateEnvironmentPending || isUpdateEnvironmentPending
                 }
               >
                 {editingEnvironment ? "Update" : "Add"} Environment
@@ -293,8 +271,9 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
           <div className="mt-4 max-h-full overflow-auto">
             <Form
               form={applicationForm}
-              layout="inline"
               onFinish={handleApplicationSubmit}
+              labelCol={{ span: 12 }}
+              wrapperCol={{ span: 12 }}
             >
               <Form.Item
                 name="name"
@@ -305,13 +284,31 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
               >
                 <Input placeholder="Enter application name" />
               </Form.Item>
+              {!editingApplication && (
+                <Form.Item
+                  name="environmentId"
+                  rules={[
+                    {
+                      required: true,
+                      message: "Please select an environment",
+                    },
+                  ]}
+                >
+                  <Select placeholder="Select an environment">
+                    {environmentList?.map((env: any) => (
+                      <Select.Option key={env.id} value={env.id}>
+                        {env.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              )}
               <Button
                 type="primary"
                 htmlType="submit"
                 icon={<PlusOutlined />}
                 loading={
-                  createApplicationMutation.isPending ||
-                  updateApplicationMutation.isPending
+                  isCreateApplicationPending || isUpdateApplicationPending
                 }
                 disabled={!environmentList}
               >

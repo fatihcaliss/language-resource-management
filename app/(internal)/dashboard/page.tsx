@@ -60,9 +60,9 @@ export default function DashboardPage() {
   } = useCreateEnvironment()
 
   const {
-    createProject,
-    isPending: isCreatingProject,
-    isSuccess: isProjectCreated,
+    createApplication,
+    isPending: isCreatingApplication,
+    isSuccess: isApplicationCreated,
   } = useCreateApplication()
 
   const treeData = isSuccess ? transformEnvironmentData(environmentList) : []
@@ -104,8 +104,9 @@ export default function DashboardPage() {
     environmentId: string
   }) => {
     try {
-      await createProject(values)
-      isProjectCreated && messageApi.success("Project created successfully!")
+      await createApplication(values)
+      isApplicationCreated &&
+        messageApi.success("Application created successfully!")
       projectForm.resetFields()
       setIsProjectModalOpen(false)
     } catch (error: any) {
@@ -271,7 +272,7 @@ export default function DashboardPage() {
             onOk={() => projectForm.submit()}
             okText="Create"
             cancelText="Cancel"
-            confirmLoading={isCreatingProject}
+            confirmLoading={isCreatingApplication}
           >
             <Form
               form={projectForm}
