@@ -2,6 +2,8 @@
 
 import React, { useEffect, useMemo, useState } from "react"
 import {
+  ExportOutlined,
+  ImportOutlined,
   PlusOutlined,
   SearchOutlined,
   SettingOutlined,
@@ -28,6 +30,7 @@ import {
   useGetResourceTypes,
   useUpdateResourceType,
 } from "@/app/hooks/useResourceTypes"
+import { resourceService } from "@/app/services/resourceService"
 import { debounce } from "@/app/utils/debounce"
 
 const ResourcesManagementPage: React.FC = () => {
@@ -320,6 +323,43 @@ const ResourcesManagementPage: React.FC = () => {
     }
   }
 
+  const handleExportResources = async () => {
+    try {
+      if (!selectedEnvironment.id || !selectedApplicationType.id) {
+        messageApi.warning(
+          "Please select an environment and application type first"
+        )
+        return
+      }
+
+      const blob = await resourceService.postExportResource({
+        environmentId: selectedEnvironment.id,
+        applicationTypeId: selectedApplicationType.id,
+      })
+
+      // Create a URL for the blob
+      const url = window.URL.createObjectURL(blob)
+
+      // Create a temporary link element
+      const link = document.createElement("a")
+      link.href = url
+      link.download = `resources-${selectedEnvironment.name}-${selectedApplicationType.name}.xlsx`
+
+      // Trigger download
+      document.body.appendChild(link)
+      link.click()
+
+      // Cleanup
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+
+      messageApi.success("Resources exported successfully!")
+    } catch (error) {
+      console.error("Export error:", error)
+      messageApi.error("Failed to export resources")
+    }
+  }
+
   // Define table columns
   const columns: ColumnsType<IResource> = [
     {
@@ -407,6 +447,7 @@ const ResourcesManagementPage: React.FC = () => {
         <div className="p-6">
           <div className="mb-6">
             <h1 className="text-2xl font-bold mb-4">Resources Management</h1>
+
             <div className="flex justify-between mb-4">
               <div className="flex gap-2 w-1/2">
                 <Button
@@ -434,17 +475,36 @@ const ResourcesManagementPage: React.FC = () => {
                   allowClear
                 />
               </div>
+              <div className="flex gap-2">
+                <Button
+                  type="default"
+                  icon={<ImportOutlined />}
+                  onClick={() => setIsSettingsModalVisible(true)}
+                >
+                  Import Resources
+                </Button>
+                <Button
+                  type="default"
+                  icon={<ExportOutlined />}
+                  onClick={handleExportResources}
+                  disabled={
+                    !selectedEnvironment.id || !selectedApplicationType.id
+                  }
+                >
+                  Export Resources
+                </Button>
 
-              <Button
-                type="primary"
-                icon={<PlusOutlined />}
-                onClick={showModal}
-                disabled={
-                  !selectedEnvironment.id || !selectedApplicationType.id
-                }
-              >
-                Add New Resource
-              </Button>
+                <Button
+                  type="primary"
+                  icon={<PlusOutlined />}
+                  onClick={showModal}
+                  disabled={
+                    !selectedEnvironment.id || !selectedApplicationType.id
+                  }
+                >
+                  Add New Resource
+                </Button>
+              </div>
             </div>
           </div>
 

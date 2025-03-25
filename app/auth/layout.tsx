@@ -8,7 +8,7 @@ export default function AuthLayout({
   children: React.ReactNode
 }) {
   const { theme } = useTheme()
-  console.log("theme", theme)
+
   return (
     <div
       className={`auth-layout bg-gradient-to-b from-[#1677ff] to-[#99c3ff] ${
