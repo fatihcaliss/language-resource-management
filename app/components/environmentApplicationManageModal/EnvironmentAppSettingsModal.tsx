@@ -1,6 +1,6 @@
 import React, { useState } from "react"
 import { PlusOutlined } from "@ant-design/icons"
-import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQueryClient } from "@tanstack/react-query"
 import {
   Button,
   Divider,
@@ -24,11 +24,7 @@ import {
   useDeleteEnvironment,
   useUpdateEnvironment,
 } from "@/app/hooks/useEnvironment"
-import { applicationService } from "@/app/services/applicationService"
-import {
-  Environment,
-  environmentService,
-} from "@/app/services/environmentService"
+import { Environment } from "@/app/services/environmentService"
 
 interface Application {
   id: string
@@ -215,7 +211,6 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
         footer={null}
         styles={{ body: { maxHeight: "60vh", overflow: "auto" } }}
       >
-        <Divider />
         {activeTab === "Environments" && (
           <div className="mt-4 max-h-full overflow-auto">
             <Form
