@@ -47,8 +47,8 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
   isOpen,
   onClose,
   environmentList,
-  // applicationList,
 }) => {
+  const [modal, contextHolder] = Modal.useModal()
   const [activeTab, setActiveTab] = useState<string | number>("Environments")
   const [environmentForm] = Form.useForm()
   const [applicationForm] = Form.useForm()
@@ -56,8 +56,7 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
     useState<EditingItem | null>(null)
   const [editingApplication, setEditingApplication] =
     useState<EditingItem | null>(null)
-  const queryClient = useQueryClient()
-  const [messageApi, contextHolder] = message.useMessage()
+  const [messageApi, messageContextHolder] = message.useMessage()
 
   const { data: applicationList } = useGetApplications()
 
@@ -117,10 +116,12 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
       title: "Name",
       dataIndex: "name",
       key: "name",
+      width: "50%",
     },
     {
       title: "Actions",
       key: "actions",
+      width: "50%",
       render: (_: any, record: Environment) => (
         <div className="flex gap-2">
           <Button
@@ -137,7 +138,18 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
             size="small"
             danger
             loading={isDeleteEnvironmentPending}
-            onClick={() => deleteEnvironment({ id: record.id })}
+            onClick={() => {
+              modal.confirm({
+                title: "Delete Environment",
+                content: "Are you sure you want to delete this environment?",
+                onOk: () => deleteEnvironment({ id: record.id }),
+                centered: true,
+                okText: "Yes, delete",
+                okButtonProps: {
+                  danger: true,
+                },
+              })
+            }}
           >
             Delete
           </Button>
@@ -151,10 +163,12 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
       title: "Name",
       dataIndex: "name",
       key: "name",
+      width: "50%",
     },
     {
       title: "Actions",
       key: "actions",
+      width: "50%",
       render: (_: any, record: { id: string; name: string }) => (
         <div className="flex gap-2">
           <Button
@@ -171,7 +185,18 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
             size="small"
             danger
             loading={isDeleteApplicationPending}
-            onClick={() => deleteApplication({ id: record.id })}
+            onClick={() => {
+              modal.confirm({
+                title: "Delete Application",
+                content: "Are you sure you want to delete this application?",
+                onOk: () => deleteApplication({ id: record.id }),
+                centered: true,
+                okText: "Yes, delete",
+                okButtonProps: {
+                  danger: true,
+                },
+              })
+            }}
           >
             Delete
           </Button>
@@ -182,6 +207,7 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
 
   return (
     <>
+      {messageContextHolder}
       {contextHolder}
       <Modal
         title={

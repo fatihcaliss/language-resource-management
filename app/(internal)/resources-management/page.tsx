@@ -448,8 +448,8 @@ const ResourcesManagementPage: React.FC = () => {
           <div className="mb-6">
             <h1 className="text-2xl font-bold mb-4">Resources Management</h1>
 
-            <div className="flex justify-between mb-4">
-              <div className="flex gap-2 w-1/2">
+            <div className="flex justify-between mb-4 flex-row flex-wrap gap-2">
+              <div className="flex gap-2 lg:w-1/2 flex-row flex-wrap">
                 <Button
                   type="default"
                   icon={<SettingOutlined />}
@@ -458,7 +458,7 @@ const ResourcesManagementPage: React.FC = () => {
 
                 <TreeSelect
                   placeholder="Select Environment"
-                  className="flex-1"
+                  className="flex-1 w-full"
                   value={selectedValue}
                   onChange={handleEnvironmentChange}
                   treeData={treeData}
@@ -471,11 +471,11 @@ const ResourcesManagementPage: React.FC = () => {
                   prefix={<SearchOutlined />}
                   value={searchInputValue}
                   onChange={handleSearchInputChange}
-                  className="flex-1"
+                  className="flex-1 w-full "
                   allowClear
                 />
               </div>
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-row flex-wrap">
                 <Button
                   type="default"
                   icon={<ImportOutlined />}
