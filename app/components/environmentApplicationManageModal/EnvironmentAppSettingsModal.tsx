@@ -92,7 +92,10 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
     }
   }
 
-  const handleApplicationSubmit = async (values: { name: string }) => {
+  const handleApplicationSubmit = async (values: {
+    name: string
+    environmentId: string
+  }) => {
     if (editingApplication) {
       await updateApplication({
         id: editingApplication.id,
@@ -104,7 +107,7 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
     } else if (environmentList) {
       await createApplication({
         name: values.name,
-        environmentId: environmentList[0].id,
+        environmentId: values.environmentId,
       })
       messageApi.success("Application created successfully")
       applicationForm.resetFields()

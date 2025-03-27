@@ -17,9 +17,12 @@ import {
   Select,
   Table,
   TreeSelect,
+  Upload,
 } from "antd"
+import type { GetProp } from "antd"
 import type { ColumnsType } from "antd/es/table"
 import Title from "antd/es/typography/Title"
+import type { UploadFile, UploadProps } from "antd/es/upload/interface"
 
 import EnvironmentSettingsModal from "@/app/components/environmentApplicationManageModal/EnvironmentAppSettingsModal"
 import MainLayout from "@/app/components/mainLayout/MainLayout"
@@ -32,6 +35,8 @@ import {
 } from "@/app/hooks/useResourceTypes"
 import { resourceService } from "@/app/services/resourceService"
 import { debounce } from "@/app/utils/debounce"
+
+type FileType = Parameters<GetProp<UploadProps, "beforeUpload">>[0]
 
 const ResourcesManagementPage: React.FC = () => {
   const {
@@ -66,6 +71,9 @@ const ResourcesManagementPage: React.FC = () => {
     name: string
   } | null>(null)
   const [form] = Form.useForm()
+  const [fileList, setFileList] = useState<UploadFile[]>([])
+  const [uploading, setUploading] = useState(false)
+  const [isImportModalVisible, setIsImportModalVisible] = useState(false)
 
   const { createResourceType, isPending: isCreateResourceTypeLoading } =
     useCreateResourceType()
@@ -279,6 +287,7 @@ const ResourcesManagementPage: React.FC = () => {
     setIsResourceTypeModalVisible(false)
   }
 
+  // Handle Resource Type Submit
   const handleResourceTypeSubmit = async () => {
     try {
       const values = await resourceTypeForm.validateFields()
@@ -308,6 +317,7 @@ const ResourcesManagementPage: React.FC = () => {
     }
   }
 
+  // Handle Edit Resource Type
   const handleEditResourceType = (record: { id: string; name: string }) => {
     setEditingResourceType(record)
     resourceTypeForm.setFieldsValue({ typeName: record.name })
@@ -323,6 +333,7 @@ const ResourcesManagementPage: React.FC = () => {
     }
   }
 
+  // Export Resources
   const handleExportResources = async () => {
     try {
       if (!selectedEnvironment.id || !selectedApplicationType.id) {
@@ -358,6 +369,73 @@ const ResourcesManagementPage: React.FC = () => {
       console.error("Export error:", error)
       messageApi.error("Failed to export resources")
     }
+  }
+
+  const showImportModal = () => {
+    setIsImportModalVisible(true)
+  }
+
+  const handleImportCancel = () => {
+    setFileList([])
+    setIsImportModalVisible(false)
+  }
+
+  // Import Resourcesß
+  const handleImportResources = async () => {
+    try {
+      if (!selectedEnvironment.id || !selectedApplicationType.id) {
+        messageApi.warning(
+          "Please select an environment and application type first"
+        )
+        return
+      }
+
+      const formData = new FormData()
+      fileList.forEach((file) => {
+        formData.append("file", file as FileType)
+      })
+
+      setUploading(true)
+      await resourceService.postImportResource({ formData })
+
+      setFileList([])
+      setIsImportModalVisible(false)
+      messageApi.success("Resources imported successfully!")
+
+      // Refresh the table data
+      updateFiltersAndPagination(
+        {
+          current: tablePagination.page,
+          pageSize: tablePagination.pageSize,
+        },
+        {
+          selectedApplicationType,
+          selectedEnvironment,
+        }
+      )
+    } catch (error: any) {
+      console.error("Import error:", error)
+      messageApi.error(error?.error?.detail || "Failed to import resources")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  // Add this new upload props configuration
+  const uploadProps: UploadProps = {
+    accept: ".xlsx,.xls",
+    maxCount: 1,
+    onRemove: (file) => {
+      const index = fileList.indexOf(file)
+      const newFileList = fileList.slice()
+      newFileList.splice(index, 1)
+      setFileList(newFileList)
+    },
+    beforeUpload: (file) => {
+      setFileList([...fileList, file])
+      return false // Prevent auto upload
+    },
+    fileList,
   }
 
   // Define table columns
@@ -476,13 +554,18 @@ const ResourcesManagementPage: React.FC = () => {
                 />
               </div>
               <div className="flex gap-2 flex-row flex-wrap">
-                <Button
-                  type="default"
-                  icon={<ImportOutlined />}
-                  onClick={() => setIsSettingsModalVisible(true)}
-                >
-                  Import Resources
-                </Button>
+                <div className="flex gap-2">
+                  <Button
+                    type="default"
+                    icon={<ImportOutlined />}
+                    onClick={showImportModal}
+                    disabled={
+                      !selectedEnvironment.id || !selectedApplicationType.id
+                    }
+                  >
+                    Import Resources
+                  </Button>
+                </div>
                 <Button
                   type="default"
                   icon={<ExportOutlined />}
@@ -743,6 +826,42 @@ const ResourcesManagementPage: React.FC = () => {
             environmentList={environmentList}
             // applicationList={applicationList}
           />
+
+          <Modal
+            title="Import Resources"
+            open={isImportModalVisible}
+            onCancel={handleImportCancel}
+            footer={[
+              <Button key="cancel" onClick={handleImportCancel}>
+                Cancel
+              </Button>,
+              <Button
+                key="submit"
+                type="primary"
+                onClick={handleImportResources}
+                disabled={fileList.length === 0}
+                loading={uploading}
+              >
+                {uploading ? "Uploading" : "Import"}
+              </Button>,
+            ]}
+          >
+            <div className="py-4">
+              <p className="mb-4">
+                Please select an Excel file (.xlsx, .xls) to import resources.
+              </p>
+              <Upload {...uploadProps}>
+                <Button icon={<ImportOutlined />}>Select File</Button>
+              </Upload>
+              {fileList.length > 0 && (
+                <div className="mt-4">
+                  <p className="text-sm text-gray-500">
+                    Selected file: {fileList[0].name}
+                  </p>
+                </div>
+              )}
+            </div>
+          </Modal>
         </div>
       </MainLayout>
     </>
