@@ -522,7 +522,7 @@ const ResourcesManagementPage: React.FC = () => {
     <>
       {contextHolder}
       <MainLayout>
-        <div className="p-6">
+        <div>
           <div className="mb-6">
             <h1 className="text-2xl font-bold mb-4">Resources Management</h1>
 

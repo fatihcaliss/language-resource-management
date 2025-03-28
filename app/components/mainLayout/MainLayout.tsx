@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react"
 import {
+  AppstoreOutlined,
   BulbFilled,
   BulbOutlined,
   LogoutOutlined,
@@ -139,7 +140,7 @@ const MainLayout = ({ children }: MainLayoutProps) => {
           items={[
             {
               key: "/dashboard",
-              icon: <UserOutlined />,
+              icon: <AppstoreOutlined />,
               label: "Dashboard",
               onClick: () => router.push("/dashboard"),
             },
@@ -154,6 +155,12 @@ const MainLayout = ({ children }: MainLayoutProps) => {
               icon: <UploadOutlined />,
               label: "Resources",
               onClick: () => router.push("/resources-management"),
+            },
+            {
+              key: "/user-management",
+              icon: <UserOutlined />,
+              label: "User Management",
+              onClick: () => router.push("/user-management"),
             },
           ]}
         />

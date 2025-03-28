@@ -12,10 +12,11 @@ export const APPLICATION_KEYS = {
   detail: (id: string) => [...APPLICATION_KEYS.details(), id] as const,
 }
 
-export const useGetApplications = () => {
+export const useGetApplications = (environmentId: string, options = {}) => {
   return useQuery({
     queryKey: APPLICATION_KEYS.lists(),
-    queryFn: applicationService.getProjects,
+    queryFn: () => applicationService.getProjects(environmentId),
+    ...options,
   })
 }
 

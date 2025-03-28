@@ -57,8 +57,13 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
   const [editingApplication, setEditingApplication] =
     useState<EditingItem | null>(null)
   const [messageApi, messageContextHolder] = message.useMessage()
+  const [selectedEnvironment, setSelectedEnvironment] = useState<string>("")
 
-  const { data: applicationList } = useGetApplications()
+  const { data: applicationList, isFetching: isApplicationListFetching } =
+    useGetApplications(selectedEnvironment || "", {
+      enabled: !!selectedEnvironment,
+      queryKey: ["applications", selectedEnvironment],
+    })
 
   // Mutations for Environments
   const { createEnvironment, isPending: isCreateEnvironmentPending } =
@@ -207,7 +212,7 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
       ),
     },
   ]
-
+  console.log("selectedEnvironment", selectedEnvironment)
   return (
     <>
       {messageContextHolder}
@@ -309,7 +314,12 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
                     },
                   ]}
                 >
-                  <Select placeholder="Select an environment">
+                  <Select
+                    placeholder="Select an environment"
+                    onChange={(value) => {
+                      setSelectedEnvironment(value)
+                    }}
+                  >
                     {environmentList?.map((env: any) => (
                       <Select.Option key={env.id} value={env.id}>
                         {env.name}
@@ -358,6 +368,7 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
               rowKey="id"
               size="small"
               pagination={false}
+              loading={isApplicationListFetching}
             />
           </div>
         )}

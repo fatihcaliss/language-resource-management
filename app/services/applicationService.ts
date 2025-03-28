@@ -20,9 +20,9 @@ export interface DeleteProjectParams {
 // API functions
 export const applicationService = {
   // Get all projects (application types)
-  getProjects: async (): Promise<ApplicationType[]> => {
+  getProjects: async (environmentId: string): Promise<ApplicationType[]> => {
     const { data } = await apiClient.get<ApiResponse<ApplicationType[]>>(
-      "/ApplicationTypes/list"
+      `/ApplicationTypes/list?EnvironmentId=${environmentId}`
     )
     return data.data
   },
