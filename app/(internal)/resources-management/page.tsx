@@ -533,23 +533,81 @@ const ResourcesManagementPage: React.FC = () => {
                   icon={<SettingOutlined />}
                   onClick={() => setIsSettingsModalVisible(true)}
                 />
-
-                <TreeSelect
+                <Select
                   placeholder="Select Environment"
                   className="flex-1 w-full"
-                  value={selectedValue}
-                  onChange={handleEnvironmentChange}
-                  treeData={treeData}
+                  value={selectedEnvironment.id}
+                  onChange={(value) => {
+                    // Clear table filters when changing environment
+                    setFilteredInfo({})
+
+                    const environment = environmentList?.find(
+                      (env: any) => env.id === value
+                    )
+                    if (environment) {
+                      setSelectedEnvironment({
+                        id: environment.id,
+                        name: environment.name,
+                        applicationTypes: environment.applicationTypes,
+                      })
+
+                      // Reset application type when environment changes
+                      setSelectedApplicationType({ id: "", name: "" })
+                    }
+                  }}
                   loading={isEnvironmentListLoading}
-                  treeLine
-                  treeDefaultExpandAll
+                  options={environmentList?.map((env: any) => ({
+                    label: env.name,
+                    value: env.id,
+                    disabled: !env.applicationTypes?.length,
+                  }))}
+                />
+                <Select
+                  placeholder="Select Application"
+                  className="flex-1 w-full"
+                  value={selectedApplicationType.id}
+                  onChange={(value) => {
+                    const applicationType =
+                      selectedEnvironment.applicationTypes?.find(
+                        (app: any) => app.id === value
+                      )
+
+                    if (applicationType) {
+                      setSelectedApplicationType({
+                        id: applicationType.id,
+                        name: applicationType.name,
+                      })
+
+                      // Trigger data fetch with the new selection
+                      updateFiltersAndPagination(
+                        {
+                          current: 1,
+                          pageSize: tablePagination.pageSize,
+                        },
+                        {
+                          selectedApplicationType: {
+                            id: applicationType.id,
+                            name: applicationType.name,
+                          },
+                          selectedEnvironment,
+                        }
+                      )
+                    }
+                  }}
+                  disabled={!selectedEnvironment.id}
+                  options={selectedEnvironment.applicationTypes?.map(
+                    (app: any) => ({
+                      label: app.name,
+                      value: app.id,
+                    })
+                  )}
                 />
                 <Input
                   placeholder="Search resources..."
                   prefix={<SearchOutlined />}
                   value={searchInputValue}
                   onChange={handleSearchInputChange}
-                  className="flex-1 w-full "
+                  className="flex-1 w-full"
                   allowClear
                 />
               </div>

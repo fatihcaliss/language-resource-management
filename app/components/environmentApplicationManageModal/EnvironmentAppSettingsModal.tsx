@@ -299,15 +299,6 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
               labelCol={{ span: 12 }}
               wrapperCol={{ span: 12 }}
             >
-              <Form.Item
-                name="name"
-                rules={[
-                  { required: true, message: "Please enter application name" },
-                ]}
-                className="flex-1"
-              >
-                <Input placeholder="Enter application name" />
-              </Form.Item>
               {!editingApplication && (
                 <Form.Item
                   name="environmentId"
@@ -327,6 +318,16 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
                   </Select>
                 </Form.Item>
               )}
+              <Form.Item
+                name="name"
+                rules={[
+                  { required: true, message: "Please enter application name" },
+                ]}
+                className="flex-1"
+              >
+                <Input placeholder="Enter application name" />
+              </Form.Item>
+
               <Button
                 type="primary"
                 htmlType="submit"
