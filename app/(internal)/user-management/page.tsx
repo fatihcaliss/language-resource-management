@@ -4,6 +4,7 @@ import { useEffect, useState } from "react"
 import {
   DeleteOutlined,
   EditOutlined,
+  TeamOutlined,
   UserAddOutlined,
 } from "@ant-design/icons"
 import {
@@ -19,6 +20,7 @@ import {
 } from "antd"
 
 import MainLayout from "@/app/components/mainLayout/MainLayout"
+import { useCreateGroup } from "@/app/hooks/useGroups"
 
 interface User {
   id: string
@@ -33,11 +35,18 @@ interface UserFormData {
   group: string
 }
 
+interface GroupFormData {
+  name: string
+}
+
 const UserManagement = () => {
   const [users, setUsers] = useState<User[]>([])
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form] = Form.useForm()
   const [editingUserId, setEditingUserId] = useState<string | null>(null)
+  const [isGroupModalOpen, setIsGroupModalOpen] = useState(false)
+  const [formGroup] = Form.useForm()
+  const { createGroup } = useCreateGroup()
 
   // Mock groups - replace with actual groups from your backend
   const groups = ["Admin", "User", "Manager", "Guest"]
@@ -101,6 +110,11 @@ const UserManagement = () => {
     setIsModalOpen(true)
   }
 
+  const handleAddGroup = () => {
+    formGroup.resetFields()
+    setIsGroupModalOpen(true)
+  }
+
   const handleEdit = (user: User) => {
     setEditingUserId(user.id)
     form.setFieldsValue(user)
@@ -113,8 +127,9 @@ const UserManagement = () => {
     message.success("User deleted successfully")
   }
 
-  const handleModalOk = () => {
-    form.validateFields().then((values: UserFormData) => {
+  const handleModalOk = async () => {
+    try {
+      const values = await form.validateFields()
       if (editingUserId) {
         // Update existing user
         setUsers(
@@ -134,14 +149,43 @@ const UserManagement = () => {
       }
       setIsModalOpen(false)
       form.resetFields()
-    })
+    } catch (error) {
+      console.error("User creation error:", error)
+      message.error("User creation failed")
+    }
+  }
+
+  const handleModalGroupOk = async () => {
+    try {
+      const values = await formGroup.validateFields()
+      await createGroup(values)
+      message.success("Group created successfully")
+      formGroup.resetFields()
+      setIsGroupModalOpen(false)
+    } catch (error) {
+      console.error("Group creation error:", error)
+      message.error("Group creation failed")
+    }
   }
 
   return (
     <MainLayout>
-      <div className="mb-4">
-        <Button type="primary" icon={<UserAddOutlined />} onClick={handleAdd}>
+      <div className="mb-4 flex gap-2">
+        <Button
+          color="primary"
+          icon={<UserAddOutlined />}
+          onClick={handleAdd}
+          variant="outlined"
+        >
           Add New User
+        </Button>
+        <Button
+          color="primary"
+          icon={<TeamOutlined />}
+          onClick={handleAddGroup}
+          variant="outlined"
+        >
+          Add New Group
         </Button>
       </div>
 
@@ -183,6 +227,23 @@ const UserManagement = () => {
                 </Select.Option>
               ))}
             </Select>
+          </Form.Item>
+        </Form>
+      </Modal>
+
+      <Modal
+        title="Add New Group"
+        open={isGroupModalOpen}
+        onOk={handleModalGroupOk}
+        onCancel={() => setIsGroupModalOpen(false)}
+      >
+        <Form form={formGroup} layout="vertical">
+          <Form.Item
+            name="name"
+            label="Group"
+            rules={[{ required: true, message: "Please input group!" }]}
+          >
+            <Input />
           </Form.Item>
         </Form>
       </Modal>
