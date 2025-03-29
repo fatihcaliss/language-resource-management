@@ -25,10 +25,12 @@ export const useCreateApplication = () => {
 
   const mutation = useMutation({
     mutationFn: applicationService.createProject,
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      // Invalidate the specific application list for the environment
       queryClient.invalidateQueries({
-        queryKey: APPLICATION_KEYS.lists(),
+        queryKey: ["applications", variables.environmentId],
       })
+      // Also invalidate the general environment list
       queryClient.invalidateQueries({
         queryKey: ENVIRONMENT_KEYS.lists(),
       })
@@ -77,8 +79,11 @@ export const useDeleteApplication = (options = {}) => {
   const mutation = useMutation({
     mutationFn: applicationService.deleteProject,
     onSuccess: () => {
-      return queryClient.invalidateQueries({
-        queryKey: APPLICATION_KEYS.lists(),
+      queryClient.invalidateQueries({
+        queryKey: ["applications"],
+      })
+      queryClient.invalidateQueries({
+        queryKey: ENVIRONMENT_KEYS.lists(),
       })
     },
     onError: (error: any) => {

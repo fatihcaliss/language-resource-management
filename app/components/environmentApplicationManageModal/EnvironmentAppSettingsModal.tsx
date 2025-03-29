@@ -36,6 +36,8 @@ interface EnvironmentSettingsModalProps {
   onClose: () => void
   environmentList?: Environment[]
   applicationList?: Application[]
+  selectedApplicationType: Application
+  setSelectedApplicationType: (applicationType: Application) => void
 }
 
 interface EditingItem {
@@ -47,6 +49,8 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
   isOpen,
   onClose,
   environmentList,
+  selectedApplicationType,
+  setSelectedApplicationType,
 }) => {
   const [modal, contextHolder] = Modal.useModal()
   const [activeTab, setActiveTab] = useState<string | number>("Environments")
@@ -60,7 +64,7 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
   const [selectedEnvironment, setSelectedEnvironment] = useState<string>("")
 
   const { data: applicationList, isFetching: isApplicationListFetching } =
-    useGetApplications(selectedEnvironment || "", {
+    useGetApplications(selectedEnvironment, {
       enabled: !!selectedEnvironment,
       queryKey: ["applications", selectedEnvironment],
     })
@@ -115,7 +119,7 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
         environmentId: values.environmentId,
       })
       messageApi.success("Application created successfully")
-      applicationForm.resetFields()
+      applicationForm.resetFields(["name"])
     }
   }
 
@@ -165,7 +169,7 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
       ),
     },
   ]
-
+  console.log("selectedApplicationType", selectedApplicationType)
   const applicationColumns = [
     {
       title: "Name",
@@ -197,7 +201,15 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
               modal.confirm({
                 title: "Delete Application",
                 content: "Are you sure you want to delete this application?",
-                onOk: () => deleteApplication({ id: record.id }),
+                onOk: () => {
+                  deleteApplication({ id: record.id })
+                  if (selectedApplicationType?.id === record.id) {
+                    setSelectedApplicationType({
+                      id: "",
+                      name: "",
+                    })
+                  }
+                },
                 centered: true,
                 okText: "Yes, delete",
                 okButtonProps: {
@@ -212,7 +224,7 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
       ),
     },
   ]
-  console.log("selectedEnvironment", selectedEnvironment)
+
   return (
     <>
       {messageContextHolder}
@@ -238,6 +250,7 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
           onClose()
           setEditingEnvironment(null)
           setEditingApplication(null)
+          setSelectedEnvironment("")
           environmentForm.resetFields()
           applicationForm.resetFields()
         }}
@@ -363,7 +376,9 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
             </Form>
             <Divider />
             <Table
-              dataSource={applicationList ? applicationList : []}
+              dataSource={
+                applicationList && selectedEnvironment ? applicationList : []
+              }
               columns={applicationColumns}
               rowKey="id"
               size="small"

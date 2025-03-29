@@ -230,8 +230,21 @@ const ResourcesManagementPage: React.FC = () => {
         )
       }
     }
-  }, [environmentList])
+    if (selectedEnvironment.id && selectedApplicationType.id) {
+      setSelectedEnvironment({
+        id: selectedEnvironment.id,
+        name: selectedEnvironment.name,
+        applicationTypes:
+          environmentList?.find((env: any) => env.id === selectedEnvironment.id)
+            ?.applicationTypes || [],
+      })
 
+      setSelectedApplicationType({
+        id: selectedApplicationType.id,
+        name: selectedApplicationType.name,
+      })
+    }
+  }, [environmentList])
   // Handle modal visibility
   const showModal = () => {
     setIsModalVisible(true)
@@ -536,7 +549,11 @@ const ResourcesManagementPage: React.FC = () => {
                 <Select
                   placeholder="Select Environment"
                   className="flex-1 w-full"
-                  value={selectedEnvironment.id}
+                  value={
+                    environmentList?.find(
+                      (env: any) => env.id === selectedEnvironment.id
+                    )?.id
+                  }
                   onChange={(value) => {
                     // Clear table filters when changing environment
                     setFilteredInfo({})
@@ -559,13 +576,12 @@ const ResourcesManagementPage: React.FC = () => {
                   options={environmentList?.map((env: any) => ({
                     label: env.name,
                     value: env.id,
-                    disabled: !env.applicationTypes?.length,
                   }))}
                 />
                 <Select
                   placeholder="Select Application"
                   className="flex-1 w-full"
-                  value={selectedApplicationType.id}
+                  value={selectedApplicationType?.id}
                   onChange={(value) => {
                     const applicationType =
                       selectedEnvironment.applicationTypes?.find(
@@ -882,7 +898,8 @@ const ResourcesManagementPage: React.FC = () => {
             isOpen={isSettingsModalVisible}
             onClose={() => setIsSettingsModalVisible(false)}
             environmentList={environmentList}
-            // applicationList={applicationList}
+            selectedApplicationType={selectedApplicationType}
+            setSelectedApplicationType={setSelectedApplicationType}
           />
 
           <Modal

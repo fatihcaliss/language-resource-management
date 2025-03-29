@@ -20,14 +20,14 @@ import {
 } from "antd"
 
 import MainLayout from "@/app/components/mainLayout/MainLayout"
-import { useCreateGroup } from "@/app/hooks/useGroups"
-
-interface User {
-  id: string
-  username: string
-  email: string
-  group: string
-}
+import {
+  useCreateCompanyUser,
+  useDeleteCompanyUser,
+  useGetCompanyUserList,
+  useUpdateCompanyUser,
+} from "@/app/hooks/useCompany"
+import { useCreateGroup, useGetGroups } from "@/app/hooks/useGroups"
+import { CompanyUser } from "@/app/services/companyService"
 
 interface UserFormData {
   username: string
@@ -40,40 +40,32 @@ interface GroupFormData {
 }
 
 const UserManagement = () => {
-  const [users, setUsers] = useState<User[]>([])
+  const [messageApi, contextHolder] = message.useMessage()
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [form] = Form.useForm()
   const [editingUserId, setEditingUserId] = useState<string | null>(null)
   const [isGroupModalOpen, setIsGroupModalOpen] = useState(false)
   const [formGroup] = Form.useForm()
-  const { createGroup } = useCreateGroup()
 
-  // Mock groups - replace with actual groups from your backend
-  const groups = ["Admin", "User", "Manager", "Guest"]
+  const { data: users, isFetching: isUsersFetching } = useGetCompanyUserList()
+  const { data: groups, isFetching: isGroupsFetching } = useGetGroups()
 
-  // Mock initial data - replace with actual API call
-  useEffect(() => {
-    setUsers([
-      {
-        id: "1",
-        username: "john_doe",
-        email: "john@example.com",
-        group: "Admin",
-      },
-      {
-        id: "2",
-        username: "jane_doe",
-        email: "jane@example.com",
-        group: "User",
-      },
-    ])
-  }, [])
+  const { createGroup, isPending: isCreateGroupPending } = useCreateGroup()
+  const { data: companyUserList, isFetching: isCompanyUserListFetching } =
+    useGetCompanyUserList()
+  const { createCompanyUser, isPending: isCreateCompanyUserPending } =
+    useCreateCompanyUser()
+  const { deleteCompanyUser, isPending: isDeleteCompanyUserPending } =
+    useDeleteCompanyUser()
+  const { updateCompanyUser, isPending: isUpdateCompanyUserPending } =
+    useUpdateCompanyUser()
 
   const columns = [
     {
       title: "Username",
-      dataIndex: "username",
-      key: "username",
+      dataIndex: "fullName",
+      key: "fullName",
     },
     {
       title: "Email",
@@ -84,11 +76,12 @@ const UserManagement = () => {
       title: "Group",
       dataIndex: "group",
       key: "group",
+      render: (_: any, record: CompanyUser) => record.userGroup.name,
     },
     {
       title: "Actions",
       key: "actions",
-      render: (_: any, record: User) => (
+      render: (_: any, record: CompanyUser) => (
         <Space>
           <Button icon={<EditOutlined />} onClick={() => handleEdit(record)} />
           <Popconfirm
@@ -115,43 +108,35 @@ const UserManagement = () => {
     setIsGroupModalOpen(true)
   }
 
-  const handleEdit = (user: User) => {
+  const handleEdit = (user: CompanyUser) => {
     setEditingUserId(user.id)
     form.setFieldsValue(user)
     setIsModalOpen(true)
   }
 
   const handleDelete = (userId: string) => {
-    // Replace with actual API call
-    setUsers(users.filter((user) => user.id !== userId))
-    message.success("User deleted successfully")
+    deleteCompanyUser({ id: userId })
+    messageApi.success("User deleted successfully")
   }
 
   const handleModalOk = async () => {
     try {
       const values = await form.validateFields()
       if (editingUserId) {
-        // Update existing user
-        setUsers(
-          users.map((user) =>
-            user.id === editingUserId ? { ...user, ...values } : user
-          )
-        )
-        message.success("User updated successfully")
-      } else {
-        // Add new user
-        const newUser = {
-          id: Math.random().toString(36).substr(2, 9),
+        await updateCompanyUser({
+          id: editingUserId,
           ...values,
-        }
-        setUsers([...users, newUser])
-        message.success("User added successfully")
+        })
+        messageApi.success("User updated successfully")
+      } else {
+        await createCompanyUser(values)
+        messageApi.success("User added successfully")
       }
       setIsModalOpen(false)
       form.resetFields()
     } catch (error) {
       console.error("User creation error:", error)
-      message.error("User creation failed")
+      messageApi.error("User creation failed")
     }
   }
 
@@ -159,17 +144,18 @@ const UserManagement = () => {
     try {
       const values = await formGroup.validateFields()
       await createGroup(values)
-      message.success("Group created successfully")
+      messageApi.success("Group created successfully")
       formGroup.resetFields()
       setIsGroupModalOpen(false)
     } catch (error) {
       console.error("Group creation error:", error)
-      message.error("Group creation failed")
+      messageApi.error("Group creation failed")
     }
   }
 
   return (
     <MainLayout>
+      {contextHolder}
       <div className="mb-4 flex gap-2">
         <Button
           color="primary"
@@ -189,7 +175,13 @@ const UserManagement = () => {
         </Button>
       </div>
 
-      <Table columns={columns} dataSource={users} rowKey="id" />
+      <Table
+        columns={columns}
+        dataSource={users}
+        rowKey="id"
+        loading={isUsersFetching}
+        pagination={false}
+      />
 
       <Modal
         title={editingUserId ? "Edit User" : "Add New User"}
@@ -199,9 +191,9 @@ const UserManagement = () => {
       >
         <Form form={form} layout="vertical">
           <Form.Item
-            name="username"
-            label="Username"
-            rules={[{ required: true, message: "Please input username!" }]}
+            name="fullName"
+            label="Full Name"
+            rules={[{ required: true, message: "Please input full name!" }]}
           >
             <Input />
           </Form.Item>
@@ -216,14 +208,25 @@ const UserManagement = () => {
             <Input />
           </Form.Item>
           <Form.Item
-            name="group"
+            name="password"
+            label="Password"
+            rules={[{ required: true, message: "Please input password!" }]}
+          >
+            <Input />
+          </Form.Item>
+          <Form.Item
+            name="groupId"
             label="Group"
             rules={[{ required: true, message: "Please select a group!" }]}
           >
-            <Select>
-              {groups.map((group) => (
-                <Select.Option key={group} value={group}>
-                  {group}
+            <Select
+              loading={isGroupsFetching}
+              placeholder="Select a group"
+              allowClear
+            >
+              {groups?.map((group) => (
+                <Select.Option key={group.id} value={group.id}>
+                  {group.name}
                 </Select.Option>
               ))}
             </Select>
@@ -236,6 +239,7 @@ const UserManagement = () => {
         open={isGroupModalOpen}
         onOk={handleModalGroupOk}
         onCancel={() => setIsGroupModalOpen(false)}
+        confirmLoading={isCreateGroupPending}
       >
         <Form form={formGroup} layout="vertical">
           <Form.Item
