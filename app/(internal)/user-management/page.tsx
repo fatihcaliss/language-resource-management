@@ -195,7 +195,7 @@ const UserManagement = () => {
             label="Full Name"
             rules={[{ required: true, message: "Please input full name!" }]}
           >
-            <Input />
+            <Input placeholder="Enter full name" />
           </Form.Item>
           <Form.Item
             name="email"
@@ -205,14 +205,14 @@ const UserManagement = () => {
               { type: "email", message: "Please enter a valid email!" },
             ]}
           >
-            <Input />
+            <Input placeholder="Enter email" />
           </Form.Item>
           <Form.Item
             name="password"
             label="Password"
             rules={[{ required: true, message: "Please input password!" }]}
           >
-            <Input />
+            <Input placeholder="Enter password" />
           </Form.Item>
           <Form.Item
             name="groupId"
@@ -247,7 +247,7 @@ const UserManagement = () => {
             label="Group"
             rules={[{ required: true, message: "Please input group!" }]}
           >
-            <Input />
+            <Input placeholder="Enter group name" />
           </Form.Item>
         </Form>
       </Modal>
