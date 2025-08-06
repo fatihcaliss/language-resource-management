@@ -6,7 +6,7 @@ import { refreshAccessToken, removeAuthToken, removeRefreshToken } from "./auth"
 // Create base axios instance
 export const axiosInstance = axios.create({
   // baseURL: process.env.NEXT_PUBLIC_API_URL || "https://api.example.com",
-  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080/",
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:15000/api",
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",

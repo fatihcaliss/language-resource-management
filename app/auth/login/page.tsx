@@ -19,15 +19,21 @@ export default function LoginPage() {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: { email: string; password: string }) => {
-      const { data } = (await apiClient.post("/auth/login", credentials)) as {
-        data: { data: { token: string; refreshToken: string; message: string } }
+      const { data } = (await apiClient.post("/Users/login", credentials)) as {
+        data: {
+          data: {
+            accessToken: string
+            refreshToken: string
+            expiration: Date
+          }
+        }
       }
       return data
     },
     onSuccess: (data) => {
-      if (data.data.token) {
-        localStorage.setItem("token", data.data.token)
-        setAuthToken(data.data.token)
+      if (data.data.accessToken) {
+        localStorage.setItem("token", data.data.accessToken)
+        setAuthToken(data.data.accessToken)
 
         // Store the refresh token
         if (data.data.refreshToken) {

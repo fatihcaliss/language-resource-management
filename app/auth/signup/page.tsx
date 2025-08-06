@@ -35,10 +35,10 @@ export default function SignupPage() {
     mutationFn: async (params: {
       email: string
       password: string
-      userName: string
-      companyName: string
+      name: string
+      surname: string
     }) => {
-      const { data } = await apiClient.post("/auth/register", params)
+      const { data } = await apiClient.post("/Users/register", params)
       return data
     },
     onSuccess: (data) => {
@@ -54,8 +54,8 @@ export default function SignupPage() {
       const params = {
         email: values.email,
         password: values.password,
-        userName: values.username,
-        companyName: values.company,
+        name: values.name,
+        surname: values.surname,
       }
       await signupMutation.mutateAsync(params)
     } catch (error) {
@@ -94,28 +94,28 @@ export default function SignupPage() {
             size="large"
           >
             <Form.Item
-              name="username"
+              name="name"
               rules={[
-                { required: true, message: "Please input your username!" },
-                { min: 3, message: "Username must be at least 3 characters" },
+                { required: true, message: "Please input your name!" },
+                { min: 3, message: "Name must be at least 3 characters" },
               ]}
             >
               <Input
                 prefix={<UserOutlined className="text-gray-400" />}
-                placeholder="Username"
+                placeholder="Name"
               />
             </Form.Item>
 
             <Form.Item
-              name="company"
+              name="surname"
               rules={[
-                { required: true, message: "Please input your company!" },
-                { min: 3, message: "Company must be at least 3 characters" },
+                { required: true, message: "Please input your surname!" },
+                { min: 3, message: "Surname must be at least 3 characters" },
               ]}
             >
               <Input
-                prefix={<TeamOutlined className="text-gray-400" />}
-                placeholder="Company"
+                prefix={<UserOutlined className="text-gray-400" />}
+                placeholder="Surname"
               />
             </Form.Item>
 
