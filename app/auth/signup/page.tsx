@@ -3,12 +3,7 @@
 import { useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
-import {
-  LockOutlined,
-  MailOutlined,
-  TeamOutlined,
-  UserOutlined,
-} from "@ant-design/icons"
+import { LockOutlined, MailOutlined, UserOutlined } from "@ant-design/icons"
 import { useMutation } from "@tanstack/react-query"
 import {
   Button,
@@ -42,7 +37,12 @@ export default function SignupPage() {
       return data
     },
     onSuccess: (data) => {
-      router.push("/auth/login")
+      messageApi.success(
+        "User created successfully. Please check your email for verification."
+      )
+      setTimeout(() => {
+        router.push("/auth/login")
+      }, 1500)
     },
     onError: (error: any) => {
       messageApi.error(error?.error?.detail)
