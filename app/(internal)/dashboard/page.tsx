@@ -1,15 +1,14 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useState } from "react"
 import {
   BarChartOutlined,
   DownOutlined,
   FileTextOutlined,
-  PlusOutlined,
   TeamOutlined,
   TranslationOutlined,
 } from "@ant-design/icons"
-import { useMutation, useQuery } from "@tanstack/react-query"
+import { useQuery } from "@tanstack/react-query"
 import {
   Button,
   Card,
@@ -25,7 +24,6 @@ import {
   Tree,
   Typography,
 } from "antd"
-import type { TreeDataNode, TreeProps } from "antd"
 
 import MainLayout from "@/app/components/mainLayout/MainLayout"
 import { useCreateApplication } from "@/app/hooks/useApplication"

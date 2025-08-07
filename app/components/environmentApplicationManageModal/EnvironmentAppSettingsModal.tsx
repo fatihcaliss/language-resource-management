@@ -169,7 +169,7 @@ const EnvironmentSettingsModal: React.FC<EnvironmentSettingsModalProps> = ({
       ),
     },
   ]
-  console.log("selectedApplicationType", selectedApplicationType)
+
   const applicationColumns = [
     {
       title: "Name",

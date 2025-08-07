@@ -63,7 +63,7 @@ export const refreshAccessToken = async (): Promise<{
     }
 
     const response = await fetch(
-      "http://localhost:8080/Auth/login-with-refresh-token",
+      "http://localhost:16000/api/login-with-refresh-token",
       {
         method: "POST",
         headers: {
@@ -99,6 +99,13 @@ export const refreshAccessToken = async (): Promise<{
 
 export const logout = (): string => {
   removeAuthToken()
+  removeRefreshToken()
+  localStorage.removeItem("token")
+
+  // Clear subscription status
+  // localStorage.removeItem("subscriptionStatus")
+  // document.cookie = "subscriptionStatus=; path=/; max-age=0"
+
   window.location.href = "/auth/login"
   return "Logged out successfully!"
 }
