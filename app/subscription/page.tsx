@@ -1,5 +1,6 @@
 "use client"
 
+import { useRouter } from "next/navigation"
 import {
   ArrowRightOutlined,
   CheckOutlined,
@@ -24,6 +25,7 @@ interface SubscriptionPlan {
 }
 
 export default function SubscriptionPage() {
+  const router = useRouter()
   const {
     data: subscriptionListData,
     isFetching: isSubscriptionListDataFetching,
@@ -34,9 +36,8 @@ export default function SubscriptionPage() {
   })
 
   const handleUpgrade = (subscriptionTypeId?: number) => {
-    // TODO: Implement subscription upgrade logic
-    // This could redirect to a payment provider, open a modal, etc.
-    console.log("Upgrade subscription clicked", { subscriptionTypeId })
+    if (!subscriptionTypeId) return
+    router.push(`/subscription/upgrade?planId=${subscriptionTypeId}`)
   }
 
   const handleContactSales = () => {
